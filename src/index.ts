@@ -419,10 +419,10 @@ const typedRegExp = <
         >
         : {}
     );
-    type ReplaceArgs<TString extends string> = [
+    type ReplaceArgs<TString extends string, TOverload extends number> = [
         string: TString,
-        ...([replaceValue: string] |
-            [replacer: (...p: [
+        [
+            replacer: (...p: [
                 ...unnamedGroups: unknown extends AsLinked<Captures, infer Head, infer Tail>
                     ? [match: Head, ...p: Tail]
                     : never
@@ -432,15 +432,26 @@ const typedRegExp = <
                 ...groups: keyof NamedCaptures extends never
                     ? []
                     : [groups: NamedCaptures]
-            ]) => string]
-        )
+            ]) => string,
+            replaceValue: string
+        ][TOverload]
     ];
+    function replace<T extends string>(...args: ReplaceArgs<T, 0>): string;
+    function replace<T extends string>(...args: ReplaceArgs<T, 1>): string;
+    function replace<T extends string>(...args: ReplaceArgs<T, number>) {
+        return args[0].replace(regExp, args[1] as any);
+    }
+    function replaceAll<T extends string>(...args: ReplaceArgs<T, 0>): string;
+    function replaceAll<T extends string>(...args: ReplaceArgs<T, 1>): string;
+    function replaceAll<T extends string>(...args: ReplaceArgs<T, number>) {
+        return args[0].replaceAll(regExp, args[1] as any);
+    }
     const ternaryGlobalMethods = <TBoolean extends boolean>(condition: TBoolean) => ternary(condition)(
         {
             matchAll: (
                 source: string
             ) => source.matchAll(regExp) as any as RegExpStringIterator<StrictRegExpExecArray>,
-            replaceAll: <T extends string>(...args: ReplaceArgs<T>) => args[0].replaceAll(regExp, args[1] as any),
+            replaceAll,
         },
         {}
     );
@@ -473,7 +484,7 @@ const typedRegExp = <
             GlobalMatches,
             StrictRegExpExecArray
         >) | null,
-        replace: <T extends string>(...args: ReplaceArgs<T>) => args[0].replace(regExp, args[1] as any),
+        replace,
         ...ternaryGlobalMethods(isGlobal)
     };
     // ternaryGlobalMethods + code below specifically to help TS for discriminated unions (global + hasIndices).

@@ -403,18 +403,16 @@ const typedRegExp = <
             ? true
             : false
     ;
-    type StrictRegExpExecArray = Omit<
-        RegExpExecArray,
-        keyof unknown[] | 'groups' | 'indices'
-    > & Omit<
-        Captures,
-        number extends Captures['length']
-            ? never
-            : number
-    > & { groups: keyof NamedCaptures extends never
+    type StrictRegExpExecArray = Override<
+        Omit<RegExpExecArray, keyof unknown[] | 'indices'>,
+        { groups: keyof NamedCaptures extends never
             ? undefined
             : NamedCaptures
-    } & Is<HasFlag<'d'>,
+        }
+    > & Omit<Captures, number extends Captures['length']
+        ? never
+        : number
+    > & Is<HasFlag<'d'>,
         {indices: NonNullable<RegExpExecArray['indices']>},
         {}
     >;

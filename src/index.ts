@@ -412,10 +412,13 @@ const typedRegExp = <
     > & Omit<Captures, number extends Captures['length']
         ? never
         : number
-    > & Is<HasFlag<'d'>,
-        {indices: NonNullable<RegExpExecArray['indices']>},
-        {}
-    >;
+    > & (RegExpExecArray extends {indices: infer Indices} // Potentially breaks something niche?
+        ? Is<HasFlag<'d'>,
+            {indices: NonNullable<Indices>},
+            {}
+        >
+        : {}
+    );
     type ReplaceArgs<TString extends string> = [
         string: TString,
         ...([replaceValue: string] |
@@ -478,16 +481,17 @@ const typedRegExp = <
     type GlobalBehavior<T extends boolean> = {
         global: T
     } & ReturnType<typeof ternaryGlobalMethods<T>>;
-    type GlobalTrueIndicesBehavior<T extends boolean> = {
-        hasIndices: T,
+    type HasIndicesOnExistence<T extends boolean> = 'hasIndices' extends keyof RegExp
+        ? {hasIndices: T}
+        : {}
+    ;
+    type GlobalTrueIndicesBehavior<T extends boolean> = HasIndicesOnExistence<T> & {
         matchAll: (string: string) => RegExpStringIterator<StrictRegExpExecArrayForHasIndices<T>>
     };
-    type GlobalFalseIndicesBehavior<T extends boolean> = {
-        hasIndices: T,
+    type GlobalFalseIndicesBehavior<T extends boolean> = HasIndicesOnExistence<T> & {
         match: (string: string) => StrictRegExpExecArrayForHasIndices<T> | null
     };
-    type IndicesBehavior<T extends boolean> = {
-        hasIndices: T,
+    type IndicesBehavior<T extends boolean> = HasIndicesOnExistence<T> & {
         exec: (string: string) => StrictRegExpExecArrayForHasIndices<T> | null
     };
     return ret as Prettify<Omit<typeof ret, 'exec' | 'match' | 'matchAll'> & (

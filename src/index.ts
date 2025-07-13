@@ -432,7 +432,18 @@ const typedRegExp = <
             ]) => string]
         )
     ];
-    return {
+    const ternaryGlobalMethods = <TBoolean extends boolean>(condition: TBoolean) => ternary(condition)(
+        {
+            matchAll: (
+                source: string
+            ) => source.matchAll(regExp) as any as RegExpStringIterator<StrictRegExpExecArray>,
+            replaceAll: <T extends string>(...args: ReplaceArgs<T>) => args[0].replaceAll(regExp, args[1] as any),
+        },
+        {}
+    );
+    // for some reason GlobalMatches hits recursion limit faster?
+    type GlobalMatches = [Captures[0], ...Captures[0][]]; // can't be empty arr. Either null or one+.
+    const ret = {
         regExp,
         ...toObj(regExp as Override<typeof regExp, {
             dotAll: HasFlag<'s'>,
@@ -456,18 +467,37 @@ const typedRegExp = <
         match: (
             source: string
         ) => source.match(regExp) as any as (Is<HasFlag<'g'>,
-            [Captures[0], ...Captures[0][]], // can't be empty arr. Either null or one+.
+            GlobalMatches,
             StrictRegExpExecArray
         >) | null,
         replace: <T extends string>(...args: ReplaceArgs<T>) => args[0].replace(regExp, args[1] as any),
-        ...ternary(isGlobal)(
-        {
-            matchAll: (
-                source: string
-            ) => source.matchAll(regExp) as any as RegExpStringIterator<StrictRegExpExecArray>,
-            replaceAll: <T extends string>(...args: ReplaceArgs<T>) => args[0].replaceAll(regExp, args[1] as any),
-        },
-        {}
-    )
-    }
+        ...ternaryGlobalMethods(isGlobal)
+    };
+    // ternaryGlobalMethods + code below specifically to help TS for discriminated unions (global + hasIndices).
+    type StrictRegExpExecArrayForHasIndices<T extends boolean> = StrictRegExpExecArray & Is<T, {indices: NonNullable<RegExpExecArray['indices']>}, {}>;
+    type GlobalBehavior<T extends boolean> = {
+        global: T
+    } & ReturnType<typeof ternaryGlobalMethods<T>>;
+    type GlobalTrueIndicesBehavior<T extends boolean> = {
+        hasIndices: T,
+        matchAll: (string: string) => RegExpStringIterator<StrictRegExpExecArrayForHasIndices<T>>
+    };
+    type GlobalFalseIndicesBehavior<T extends boolean> = {
+        hasIndices: T,
+        match: (string: string) => StrictRegExpExecArrayForHasIndices<T> | null
+    };
+    type IndicesBehavior<T extends boolean> = {
+        hasIndices: T,
+        exec: (string: string) => StrictRegExpExecArrayForHasIndices<T> | null
+    };
+    return ret as Prettify<Omit<typeof ret, 'exec' | 'match' | 'matchAll'> & (
+        (
+            Omit<GlobalBehavior<true>, 'matchAll'>
+            & { match: (string: string) => GlobalMatches | null }
+            & (GlobalTrueIndicesBehavior<false> | GlobalTrueIndicesBehavior<true>)
+        ) | (
+            GlobalBehavior<false>
+            & (GlobalFalseIndicesBehavior<false> | GlobalFalseIndicesBehavior<true>)
+        )
+    ) & (IndicesBehavior<false> | IndicesBehavior<true>)>;
 };

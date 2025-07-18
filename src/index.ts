@@ -142,12 +142,12 @@ type ResolveGroup<T extends string> = T extends `${infer First}${infer Rest}`
             : ResolveGroup<Rest>
     : never
 ;
-type Resolve<T extends string, TMatch extends string> = T extends `${infer First}${infer Rest}`
+type ResolveAlternation<T extends string> = T extends `${infer First}${infer Rest}`
     ? unknown extends AsSkippedGroup<T, infer Skipped>
-        ? Resolve<Skipped, TMatch>
-        : First extends TMatch
+        ? ResolveAlternation<Skipped>
+        : First extends '|'
             ? Rest
-            : Resolve<Rest, TMatch>
+            : ResolveAlternation<Rest>
     : never
 ;
 type InferMin<S extends string> = S extends `${infer Min},${infer Max}`
@@ -204,7 +204,7 @@ type GroupsTree<T extends string> = T extends `${string}${infer Rest}`
             : never
     : []
 ;
-type TokenTree<T extends string> = unknown extends As<Resolve<T, '|'>, infer Right>
+type TokenTree<T extends string> = unknown extends As<ResolveAlternation<T>, infer Right>
     ? T extends `${infer Left}|${Right}`
         ? {
             type: 'alternation',

@@ -1,13 +1,15 @@
 // Utils
 //  Compensation
 type As<T, _Infer extends T> = unknown;
+type Head<T extends unknown[]> = T[0];
+type Tail<T extends unknown[]> = T extends [unknown, ...infer MyTail]
+    ? MyTail
+    : never
+;
 type AsLinked<
     T extends unknown[],
-    InferFirst extends T[0],
-    InferRest extends T extends [
-        InferFirst,
-        ...infer Rest
-    ] ? Rest : never
+    InferFirst extends Head<T>,
+    InferRest extends Tail<T>
 > = InferRest extends unknown[]
     ? unknown
     : never
@@ -419,17 +421,15 @@ const typedRegExp = <
         >
         : {}
     );
-    type ReplaceArgs<TString extends string, TOverload extends number> = [
-        string: TString,
+    type ReplaceArgs<T extends string, TOverload extends number> = [
+        string: T,
         ...[
-            [replacer: (...p: [
-                ...unnamedGroups: unknown extends AsLinked<Captures, infer Head, infer Tail>
-                    ? [match: Head, ...p: Tail]
-                    : never
-                ,
+            [replacer: (...p: [ // keep for type-hinting purposes
+                match: Head<Captures>,
+                ...p: Tail<Captures>,
                 offset: number,
-                string: TString,
-                ...groups: keyof NamedCaptures extends never
+                string: T,
+                ...keyof NamedCaptures extends never
                     ? []
                     : [groups: NamedCaptures]
             ]) => string],
@@ -439,11 +439,11 @@ const typedRegExp = <
     const replace: {
         <T extends string>(...args: ReplaceArgs<T, 0>): string;
         <T extends string>(...args: ReplaceArgs<T, 1>): string;
-    } = <T extends string>(...args: ReplaceArgs<T, number>) => args[0].replace(regExp, args[1] as any);
+    } = <T extends string>([source, ...args]: ReplaceArgs<T, number>) => source.replace(regExp, ...(args as Tail<Parameters<typeof source.replace>>));
     const replaceAll: {
         <T extends string>(...args: ReplaceArgs<T, 0>): string;
         <T extends string>(...args: ReplaceArgs<T, 1>): string;
-    } = <T extends string>(...args: ReplaceArgs<T, number>) => args[0].replaceAll(regExp, args[1] as any);
+    } = <T extends string>([source, ...args]: ReplaceArgs<T, number>) => source.replaceAll(regExp, ...(args as Tail<Parameters<typeof source.replaceAll>>));
     const ternaryGlobalMethods = <TBoolean extends boolean>(condition: TBoolean) => ternary(condition)(
         {
             matchAll: (
@@ -454,7 +454,7 @@ const typedRegExp = <
         {}
     );
     // for some reason GlobalMatches hits recursion limit faster?
-    type GlobalMatches = [Captures[0], ...Captures[0][]]; // can't be empty arr. Either null or one+.
+    type GlobalMatches = [Head<Captures>, ...Head<Captures>[]]; // can't be empty arr. Either null or one+.
     const ret = {
         regExp,
         ...toObj(regExp as Override<typeof regExp, {

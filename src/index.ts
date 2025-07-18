@@ -94,25 +94,32 @@ type ValueOf<T> = T[keyof T];
 // Implementation
 // Tree
 //  Utils
-type AsGlobalContext<
+type AsSkippedEscape<
     T extends string,
-    Infer extends T extends `\\${string}${infer Rest}`
-        ? Rest
+    Infer extends T extends `\\${string}${infer Skipped}`
+        ? Skipped
         : never
 > = Infer extends never
     ? never
     : unknown
 ;
-type AsStandardContext<
+type AsSkippedCharacterClass<
     T extends string,
-    Infer extends unknown extends AsGlobalContext<T, infer UnescapedRest>
-        ? UnescapedRest
-        : T extends `${infer First}${infer Rest}`
-            ? First extends '['
-                ? ResolveCharacterClass<Rest>
-                : First extends '('
-                    ? ResolveGroup<Rest>
-                    : never
+    Infer extends unknown extends AsSkippedEscape<T, infer Skipped>
+        ? Skipped
+        : T extends `[${infer Rest}`
+            ? ResolveCharacterClass<Rest>
+            : never
+> = Infer extends never
+    ? never
+    : unknown
+;
+type AsSkippedGroup<
+    T extends string,
+    Infer extends unknown extends AsSkippedCharacterClass<T, infer Skipped>
+        ? Skipped
+        : T extends `(${infer Rest}`
+            ? ResolveGroup<Rest>
             : never
 > = Infer extends never
     ? never
@@ -120,24 +127,24 @@ type AsStandardContext<
 ;
 
 type ResolveCharacterClass<T extends string> = T extends `${infer First}${infer Rest}`
-    ? unknown extends AsGlobalContext<T, infer GlobalRest>
-        ? ResolveCharacterClass<GlobalRest>
+    ? unknown extends AsSkippedEscape<T, infer Skipped>
+        ? ResolveCharacterClass<Skipped>
         : First extends ']'
             ? Rest
             : ResolveCharacterClass<Rest>
     : never
 ;
 type ResolveGroup<T extends string> = T extends `${infer First}${infer Rest}`
-    ? unknown extends AsStandardContext<T, infer StandardRest>
-        ? ResolveGroup<StandardRest>
+    ? unknown extends AsSkippedGroup<T, infer Skipped>
+        ? ResolveGroup<Skipped>
         : First extends ')'
             ? Rest
             : ResolveGroup<Rest>
     : never
 ;
 type Resolve<T extends string, TMatch extends string> = T extends `${infer First}${infer Rest}`
-    ? unknown extends AsStandardContext<T, infer StandardRest>
-        ? Resolve<StandardRest, TMatch>
+    ? unknown extends AsSkippedGroup<T, infer Skipped>
+        ? Resolve<Skipped, TMatch>
         : First extends TMatch
             ? Rest
             : Resolve<Rest, TMatch>
@@ -175,28 +182,26 @@ type GroupPatterns<T extends string> = T extends `?<${infer Name}>${infer TheRes
             rest: T
         }
 ;
-type GroupsTree<T extends string> = T extends `${infer First}${infer Rest}`
-    ? T extends `\\${string}${infer UnescapedRest}`
-        ? GroupsTree<UnescapedRest>
-        : First extends '['
-            ? GroupsTree<ResolveCharacterClass<Rest>>
-            : unknown extends As<ResolveGroup<Rest>, infer Tail>
-                ? T extends `(${infer Content})${Tail}`
-                    ? [
-                        GroupPatterns<Content>['value'] & {
-                            isOptional: Tail extends `${'?' | '*'}${string}`
-                                ? true
-                                : Tail extends `{${infer ModRange}}${string}`
-                                    ? 0 extends InferMin<ModRange>
-                                        ? true
-                                        : false
-                                    : false,
-                            inner: TokenTree<GroupPatterns<Content>['rest']>
-                        },
-                        ...GroupsTree<Tail>
-                    ]
-                    : GroupsTree<Rest>
-                : never
+type GroupsTree<T extends string> = T extends `${string}${infer Rest}`
+    ? unknown extends AsSkippedCharacterClass<T, infer Skipped>
+        ? GroupsTree<Skipped>
+        : unknown extends As<ResolveGroup<Rest>, infer Tail>
+            ? T extends `(${infer Content})${Tail}`
+                ? [
+                    GroupPatterns<Content>['value'] & {
+                        isOptional: Tail extends `${'?' | '*'}${string}`
+                            ? true
+                            : Tail extends `{${infer ModRange}}${string}`
+                                ? 0 extends InferMin<ModRange>
+                                    ? true
+                                    : false
+                                : false,
+                        inner: TokenTree<GroupPatterns<Content>['rest']>
+                    },
+                    ...GroupsTree<Tail>
+                ]
+                : GroupsTree<Rest>
+            : never
     : []
 ;
 type TokenTree<T extends string> = unknown extends As<Resolve<T, '|'>, infer Right>

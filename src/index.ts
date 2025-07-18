@@ -84,7 +84,11 @@ type Override<TOriginal, TNew> = Omit<
     >
 ;
 
-type IndexOf<T> = keyof T & `${number}`;
+type Numeric<T extends string> = T extends `${infer N extends number}`
+    ? N
+    : never
+;
+type IndexOf<T> = Numeric<keyof T & `${number}`>;
 type ValueOf<T> = T[keyof T];
 
 // Implementation
@@ -421,29 +425,30 @@ const typedRegExp = <
         >
         : {}
     );
-    type ReplaceArgs<T extends string, TOverload extends number> = [
+    type TrailingReplaceArgs<T extends string> = [
+        [replacer: (...p: [ // keep for type-hinting purposes
+            match: Head<Captures>,
+            ...p: Tail<Captures>,
+            offset: number,
+            string: T,
+            ...keyof NamedCaptures extends never
+                ? []
+                : [groups: NamedCaptures]
+        ]) => string],
+        [replaceValue: string]
+    ];
+    type ReplaceArgs<T extends string, TOverloadIndex extends IndexOf<TrailingReplaceArgs<T>>> = [
         string: T,
-        ...[
-            [replacer: (...p: [ // keep for type-hinting purposes
-                match: Head<Captures>,
-                ...p: Tail<Captures>,
-                offset: number,
-                string: T,
-                ...keyof NamedCaptures extends never
-                    ? []
-                    : [groups: NamedCaptures]
-            ]) => string],
-            [replaceValue: string]
-        ][TOverload]
+        ...TrailingReplaceArgs<T>[TOverloadIndex]
     ];
     const replace: {
         <T extends string>(...args: ReplaceArgs<T, 0>): string;
         <T extends string>(...args: ReplaceArgs<T, 1>): string;
-    } = <T extends string>([source, ...args]: ReplaceArgs<T, number>) => source.replace(regExp, ...(args as Tail<Parameters<typeof source.replace>>));
+    } = <T extends string>([source, ...args]: ReplaceArgs<T, IndexOf<TrailingReplaceArgs<T>>>) => source.replace(regExp, ...(args as Tail<Parameters<typeof source.replace>>));
     const replaceAll: {
         <T extends string>(...args: ReplaceArgs<T, 0>): string;
         <T extends string>(...args: ReplaceArgs<T, 1>): string;
-    } = <T extends string>([source, ...args]: ReplaceArgs<T, number>) => source.replaceAll(regExp, ...(args as Tail<Parameters<typeof source.replaceAll>>));
+    } = <T extends string>([source, ...args]: ReplaceArgs<T, IndexOf<TrailingReplaceArgs<T>>>) => source.replaceAll(regExp, ...(args as Tail<Parameters<typeof source.replaceAll>>));
     const ternaryGlobalMethods = <TBoolean extends boolean>(condition: TBoolean) => ternary(condition)(
         {
             matchAll: (

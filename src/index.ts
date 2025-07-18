@@ -94,36 +94,53 @@ type ValueOf<T> = T[keyof T];
 // Implementation
 // Tree
 //  Utils
+type AsGlobalContext<
+    T extends string,
+    Infer extends T extends `\\${string}${infer Rest}`
+        ? Rest
+        : never
+> = Infer extends never
+    ? never
+    : unknown
+;
+type AsStandardContext<
+    T extends string,
+    Infer extends unknown extends AsGlobalContext<T, infer UnescapedRest>
+        ? UnescapedRest
+        : T extends `${infer First}${infer Rest}`
+            ? First extends '['
+                ? ResolveCharacterClass<Rest>
+                : First extends '('
+                    ? ResolveGroup<Rest>
+                    : never
+            : never
+> = Infer extends never
+    ? never
+    : unknown
+;
+
 type ResolveCharacterClass<T extends string> = T extends `${infer First}${infer Rest}`
-    ? T extends `\\${string}${infer UnescapedRest}`
-        ? ResolveCharacterClass<UnescapedRest>
+    ? unknown extends AsGlobalContext<T, infer GlobalRest>
+        ? ResolveCharacterClass<GlobalRest>
         : First extends ']'
             ? Rest
             : ResolveCharacterClass<Rest>
     : never
 ;
 type ResolveGroup<T extends string> = T extends `${infer First}${infer Rest}`
-    ? T extends `\\${string}${infer UnescapedRest}`
-        ? ResolveGroup<UnescapedRest>
-        : First extends '['
-            ? ResolveGroup<ResolveCharacterClass<Rest>>
-            : First extends '('
-                ? ResolveGroup<ResolveGroup<Rest>>
-                : First extends ')'
-                    ? Rest
-                    : ResolveGroup<Rest>
+    ? unknown extends AsStandardContext<T, infer StandardRest>
+        ? ResolveGroup<StandardRest>
+        : First extends ')'
+            ? Rest
+            : ResolveGroup<Rest>
     : never
 ;
 type Resolve<T extends string, TMatch extends string> = T extends `${infer First}${infer Rest}`
-    ? T extends `\\${string}${infer UnescapedRest}`
-        ? Resolve<UnescapedRest, TMatch>
-        : First extends '['
-            ? Resolve<ResolveCharacterClass<Rest>, TMatch>
-            : First extends '('
-                ? Resolve<ResolveGroup<Rest>, TMatch>
-                : First extends TMatch
-                    ? Rest
-                    : Resolve<Rest, TMatch>
+    ? unknown extends AsStandardContext<T, infer StandardRest>
+        ? Resolve<StandardRest, TMatch>
+        : First extends TMatch
+            ? Rest
+            : Resolve<Rest, TMatch>
     : never
 ;
 type InferMin<S extends string> = S extends `${infer Min},${infer Max}`

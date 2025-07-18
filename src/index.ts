@@ -488,8 +488,8 @@ const typedRegExp = <
             StrictRegExpExecArray
         >) | null,
         replace,
-        search: (source: string, ...args: Parameters<string['search']>) => source.search(...args),
-        split: (source: string, ...args: Parameters<string['split']>) => source.split(...args),
+        search: (source: string, ...args: Tail<Parameters<string['search']>>) => source.search(regExp, ...args),
+        split: (source: string, ...args: Tail<Parameters<string['split']>>) => source.split(regExp, ...args),
         ...ternaryGlobalMethods(isGlobal)
     };
     // ternaryGlobalMethods + code below specifically to help TS for discriminated unions (global + hasIndices).

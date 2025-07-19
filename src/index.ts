@@ -447,11 +447,13 @@ export const typedRegExp = <
             ? true
             : false
     ;
-    type StrictRegExpExecArray = Override<
+    type StrictRegExpExecArray<T extends string> = Override<
         Omit<RegExpExecArray, keyof unknown[] | 'indices'>,
-        { groups: keyof NamedCaptures extends never
-            ? undefined
-            : NamedCaptures
+        {
+            groups: keyof NamedCaptures extends never
+                ? undefined
+                : NamedCaptures,
+            input: T
         }
     > & Omit<Captures, number extends Captures['length']
         ? never
@@ -489,9 +491,9 @@ export const typedRegExp = <
     } = <T extends string>([source, ...args]: ReplaceArgs<T, IndexOf<TrailingReplaceArgs<T>>>) => source.replaceAll(regExp, ...(args as Tail<Parameters<typeof source.replaceAll>>));
     const ternaryGlobalMethods = <TBoolean extends boolean>(condition: TBoolean) => ternary(condition)(
         {
-            matchAll: (
-                source: string
-            ) => source.matchAll(regExp) as any as RegExpStringIterator<StrictRegExpExecArray>,
+            matchAll: <T extends string>(
+                source: T
+            ) => source.matchAll(regExp) as any as RegExpStringIterator<StrictRegExpExecArray<T>>,
             replaceAll,
         },
         {}
@@ -502,7 +504,7 @@ export const typedRegExp = <
         regExp,
         ...toPOJO(regExp as Override<typeof regExp, {
             dotAll: HasFlag<'s'>,
-            exec: (string: string) => StrictRegExpExecArray | null,
+            exec: <T extends string>(string: T) => StrictRegExpExecArray<T> | null,
             flags: GetFlags<ResolvedFlags>,
             global: HasFlag<'g'>,
             hasIndices: HasFlag<'d'>,
@@ -519,11 +521,11 @@ export const typedRegExp = <
             unicodeSets: HasFlag<'v'>,
             // compile: () => ,
         }>),
-        match: (
-            source: string
+        match: <T extends string>(
+            source: T
         ) => source.match(regExp) as any as (Is<HasFlag<'g'>,
             GlobalMatches,
-            StrictRegExpExecArray
+            StrictRegExpExecArray<T>
         >) | null,
         replace,
         search: (source: string, ...args: Tail<Parameters<string['search']>>) => source.search(regExp, ...args),
@@ -531,7 +533,7 @@ export const typedRegExp = <
         ...ternaryGlobalMethods(isGlobal)
     };
     // ternaryGlobalMethods + code below specifically to help TS for discriminated unions (global + hasIndices).
-    type StrictRegExpExecArrayForHasIndices<T extends boolean> = StrictRegExpExecArray & Is<T, {indices: NonNullable<RegExpExecArray['indices']>}, {}>;
+    type StrictRegExpExecArrayForHasIndices<T extends boolean, TString extends string> = StrictRegExpExecArray<TString> & Is<T, {indices: NonNullable<RegExpExecArray['indices']>}, {}>;
     type GlobalBehavior<T extends boolean> = {
         global: T
     } & ReturnType<typeof ternaryGlobalMethods<T>>;
@@ -540,13 +542,13 @@ export const typedRegExp = <
         : {}
     ;
     type GlobalTrueIndicesBehavior<T extends boolean> = HasIndicesOnExistence<T> & {
-        matchAll: (string: string) => RegExpStringIterator<StrictRegExpExecArrayForHasIndices<T>>
+        matchAll: <TString extends string>(string: TString) => RegExpStringIterator<StrictRegExpExecArrayForHasIndices<T, TString>>
     };
     type GlobalFalseIndicesBehavior<T extends boolean> = HasIndicesOnExistence<T> & {
-        match: (string: string) => StrictRegExpExecArrayForHasIndices<T> | null
+        match: <TString extends string>(string: TString) => StrictRegExpExecArrayForHasIndices<T, TString> | null
     };
     type IndicesBehavior<T extends boolean> = HasIndicesOnExistence<T> & {
-        exec: (string: string) => StrictRegExpExecArrayForHasIndices<T> | null
+        exec: <TString extends string>(string: TString) => StrictRegExpExecArrayForHasIndices<T, TString> | null
     };
     return ret as Prettify<Omit<typeof ret, 'exec' | 'match' | 'matchAll'> & (
         (

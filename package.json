@@ -1,0 +1,43 @@
+{
+  "name": "ts-regex",
+  "version": "0.1.0",
+  "description": "A minimal, statically typed alternative to RegExp",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codpro2005/ts-regex.git"
+  },
+  "keywords": [
+    "regex",
+    "regexp",
+    "typescript",
+    "type-safe",
+    "type-level"
+  ],
+  "author": "Danilo Furrer <danilo.furrer@outlook.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/codpro2005/ts-regex/issues"
+  },
+  "homepage": "https://github.com/codpro2005/ts-regex#readme"
+}

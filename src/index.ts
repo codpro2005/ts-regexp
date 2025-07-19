@@ -242,6 +242,7 @@ type Groups = (Token & {type: 'groups'})['groups'];
 // Indexification (DFS)
 //  Utils (DFS math)
 type FlattenGroupsDeep<TGroups extends Groups> = unknown extends AsLinked<TGroups, infer First, infer Rest>
+// @ts-expect-error: TS cannot infer that 'Rest' extends 'Groups'
     ? [First, ...FlattenTokenDeep<First['inner']>, ...FlattenGroupsDeep<Rest>]
     : []
 ;
@@ -259,6 +260,7 @@ type IndexifyGroupsDeep<TGroups extends Groups, TIndex extends number> = unknown
             index: TIndex,
             value: Omit<First, 'inner'> & { inner: IndexifyTokenDeepInternal<First['inner'], Increment<TIndex>> }
         },
+        // @ts-expect-error: TS cannot infer that 'Rest' extends 'Groups'
         ...IndexifyGroupsDeep<Rest, Add<TIndex, FlattenGroupsDeep<[First]>['length'] & number>>
     ]
     : []
@@ -266,6 +268,7 @@ type IndexifyGroupsDeep<TGroups extends Groups, TIndex extends number> = unknown
 type IndexifyTokenDeepInternal<TToken extends Token, TIndex extends number> = TToken extends { type: 'alternation' } ? {
     type: 'alternation',
     left: IndexifyTokenDeepInternal<TToken['left'], TIndex>,
+    // @ts-expect-error: 'FlattenTokenDeep<TToken['left']>['length']' should terminate
     right: IndexifyTokenDeepInternal<TToken['right'], Add<TIndex, FlattenTokenDeep<TToken['left']>['length'] & number>>
 } : TToken extends { type: 'groups' } ? {
         type: 'groups',
@@ -304,6 +307,7 @@ type ContextualValue<T extends GroupWithIndex, TValue> = Record<T['index'], {
     reference: T['value']
 }>;
 type DeepUndefinedGroups<TGroups extends GroupWithIndexes> = unknown extends AsLinked<TGroups, infer First, infer Rest>
+    // @ts-expect-error: TS cannot infer that 'Rest' extends 'GroupWithIndexes'
     ? ContextualValue<First, undefined> & DeepUndefinedToken<First['value']['inner']> & DeepUndefinedGroups<Rest>
     : {}
 ;
@@ -319,6 +323,7 @@ type ContextualizeGroups<TGroups extends GroupWithIndexes> = unknown extends AsL
             ? DeepUndefinedGroups<[First]>
             : never
         ) | (ContextualValue<First, string> & ContextualizeToken<First['value']['inner']>)
+    // @ts-expect-error: TS cannot infer that 'Rest' extends 'GroupWithIndexes'
     ) & ContextualizeGroups<Rest>
     : {}
 ;
@@ -357,6 +362,7 @@ type Parse<T extends string> = string extends T
         captures: [string, ...(string | undefined)[]],
         namedCaptures: Record<string, string | undefined>;
     }
+    // @ts-expect-error: 'Distribute<ContextualizeToken<IndexifyTokenDeep<TokenTree<`(${T})`>>>>' should terminate
     : Distribute<ContextualizeToken<IndexifyTokenDeep<TokenTree<`(${T})`>>>>
 ;
 
@@ -372,6 +378,7 @@ type GetFlagsInternal<T extends string, TFlags extends Flag[]> = unknown extends
     ? `${FirstMatch<First, T> extends never
         ? ''
         : FirstMatch<First, T>
+    // @ts-expect-error: TS cannot infer that 'Rest' extends 'Flag[]'
     }${GetFlagsInternal<T, Rest>}`
     : ''
 ;
@@ -381,6 +388,7 @@ type GetFlags<T extends string> = string extends T
 ;
 type AreFlagsValid<TSource extends string, TFlags extends Flag[]> = TSource extends `${infer First}${infer Rest}`
     ? First extends TFlags[number]
+        // @ts-expect-error: TS cannot infer that 'Remove<TFlags, First>' extends 'Flag[]'
         ? AreFlagsValid<Rest, Remove<TFlags, First>>
         : false
     : true
@@ -407,7 +415,7 @@ const strIncludes = <TResult extends string, TSearch extends string>(result: TRe
         ? true
         : false
 ;
-const typedRegExp = <
+export const typedRegExp = <
     TPattern extends string,
     TFlags extends string = never
 >(

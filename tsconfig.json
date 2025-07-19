@@ -10,12 +10,14 @@
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
-    "module": "NodeNext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "outDir": "dist",
-    "sourceMap": true,
+    "rootDir": "src",
     "declaration": true,
     "composite": true,
     "declarationMap": true,
     "lib": ["ESNext"]
-  }
+  },
+  "exclude": ["dist"]
 }

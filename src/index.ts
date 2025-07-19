@@ -404,10 +404,18 @@ const ternary = <TBoolean extends boolean>(condition: TBoolean) => <TIf, TElse>(
     ? TIf
     : TElse
 ;
-const toObj = <T extends object>(instance: T) => Object.fromEntries(
+const toPOJO = <T extends object>(instance: T) => Object.fromEntries(
     Object.getOwnPropertyNames(
         Object.getPrototypeOf(instance)
-    ).map(name => [name, (instance as Record<keyof never, unknown>)[name]])
+    ).map(name => {
+        const value = (instance as Record<keyof never, unknown>)[name];
+        return [
+            name,
+            typeof value === 'function'
+                ? value.bind(instance)
+                : value
+        ];
+    })
 ) as Omit<T, symbol>;
 const strIncludes = <TResult extends string, TSearch extends string>(result: TResult, search: TSearch) => result.includes(search) as string extends TResult | TSearch
     ? boolean
@@ -492,7 +500,7 @@ export const typedRegExp = <
     type GlobalMatches = [Head<Captures>, ...Head<Captures>[]]; // can't be empty arr. Either null or one+.
     const ret = {
         regExp,
-        ...toObj(regExp as Override<typeof regExp, {
+        ...toPOJO(regExp as Override<typeof regExp, {
             dotAll: HasFlag<'s'>,
             exec: (string: string) => StrictRegExpExecArray | null,
             flags: GetFlags<ResolvedFlags>,

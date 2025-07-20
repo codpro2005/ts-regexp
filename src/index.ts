@@ -70,7 +70,7 @@ type ToNattyNumber<T extends string> = T extends `0${infer Rest extends `${numbe
     : T extends `-${string}` | `${string}.${string}`
         ? never
         : T extends `${infer N extends number}`
-            ? number extends N // to catch implicitly stripped gaps
+            ? number extends N // whitespace check
                 ? never
                 : N
             : never
@@ -94,15 +94,16 @@ type ValueOf<T> = T[keyof T];
 // Implementation
 // Tree
 //  Utils
+type Exists<T> = T extends never
+    ? never
+    : unknown
+;
 type AsSkippedEscape<
     T extends string,
     Infer extends T extends `\\${string}${infer Skipped}`
         ? Skipped
         : never
-> = Infer extends never
-    ? never
-    : unknown
-;
+> = Exists<Infer>;
 type AsSkippedCharacterClass<
     T extends string,
     Infer extends unknown extends AsSkippedEscape<T, infer Skipped>
@@ -110,10 +111,7 @@ type AsSkippedCharacterClass<
         : T extends `[${infer Rest}`
             ? ResolveCharacterClass<Rest>
             : never
-> = Infer extends never
-    ? never
-    : unknown
-;
+> = Exists<Infer>;
 type AsSkippedGroup<
     T extends string,
     Infer extends unknown extends AsSkippedCharacterClass<T, infer Skipped>
@@ -121,10 +119,7 @@ type AsSkippedGroup<
         : T extends `(${infer Rest}`
             ? ResolveGroup<Rest>
             : never
-> = Infer extends never
-    ? never
-    : unknown
-;
+> = Exists<Infer>;
 
 type ResolveCharacterClass<T extends string> = T extends `${infer First}${infer Rest}`
     ? unknown extends AsSkippedEscape<T, infer Skipped>
@@ -538,7 +533,7 @@ export const typedRegExp = <
         split: (source: string, ...args: Tail<Parameters<string['split']>>) => source.split(regExp, ...args),
         ...ternaryGlobalMethods(isGlobal)
     };
-    // ternaryGlobalMethods + code below specifically to help TS for discriminated unions (global + hasIndices).
+    // ternaryGlobalMethods + code below specifically to help TS for discriminated unions (global + hasIndices). Potentially remove as it's unscalable and weird.
     type StrictRegExpExecArrayForHasIndices<T extends boolean, TString extends string> = StrictRegExpExecArray<TString> & Is<T, {indices: NonNullable<RegExpExecArray['indices']>}, {}>;
     type GlobalBehavior<T extends boolean> = {
         global: T

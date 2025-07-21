@@ -23,12 +23,9 @@ yarn add ts-regex
 # Using pnpm
 pnpm add ts-regex
 ```
-2. Import `typedRegExp` in your project
+2. Then import `typedRegExp`:
 ```ts
 import { typedRegExp } from 'ts-regex';
-
-const groups = typedRegExp('^(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})$', 'g').exec('2000-10-24')!.groups;
-//     ⤴ '{ year: string, month: string, day: string }'
 ```
 ## 🧩 Usage
 This library exports a single function:
@@ -87,16 +84,19 @@ The `typedRegExp` result is a `RegExp`-like object, with equivalent or stricter 
   > This is the same `RegExp` instance that is used under the hood to handle all `typedRegExp` runtime behaviours.
 > There are no intermediate objects for the sole reason of convenience / ease of use.
 ## ✨ Features
-- Statically typed (unnamed & named) capture groups
-- Parses different group types (uncaptured, lookaround, unnamed capture, named capture)
-- Parses nested groups
-- Parses alternation
-- Handles escape + character class parsing
-- Parses optionality based on different quantifiers (`?`, `*`, `{n,m}`)
-- Supporting Contextual awareness
-- Supporting Flag validation
-- Supporting non-literal string input (pattern + flags)
+- ✅ Strictly typed named & unnamed capture groups
+- ✅ Supports contextual awareness
+- ✅ Parses:
+  - nested groups
+  - different group types (non-capturing, lookarounds, named captures, etc.)
+  - alternation
+  - character classes and escaped characters
+- ✅ Infers group optionality from quantifiers (`?`, `*`, `{n,m}`)
+- ✅ Validates flags
+- ✅ Supports dynamic (non-literal) pattern + flag inputs
+
+
 ## 📘 API
 > ⚠️ **Work in Progress**
 
-For now, refer to [Examples PLACEHOLDER](https://www.typescriptlang.org/play?#code/...) or Usage
+For now, refer to [Examples PLACEHOLDER](https://www.typescriptlang.org/play?#code/...) or [Usage](#-usage)

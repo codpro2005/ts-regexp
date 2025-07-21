@@ -28,61 +28,84 @@ pnpm add ts-regex
 import { typedRegExp } from 'ts-regex';
 ```
 ## 🧩 Usage
-This library exports a single function:
 
-```ts
-typedRegExp(pattern: string, flags?: string)
-```
-- `pattern`: A regular expression pattern as a string.
-- `flags` _(optional)_: Standard `RegExp` flags such as `'g'`, `'i'`, `'m'`, etc.
+### Basic Usage
 
-Use it just like the native `RegExp` constructor:
-```ts
+Import and use `typedRegExp` just like the native `RegExp` constructor:
+
+```typescript
 import { typedRegExp } from 'ts-regex';
 
 const datePattern = typedRegExp('(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})');
+const emailPattern = typedRegExp('\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b', 'i');
 ```
-### 🔎 Return Value
-The `typedRegExp` result is a `RegExp`-like object, with equivalent or stricter typing of the following:
-> Since this is a POJO (plain old javascript object), the object is **not** a `RegExp` instance.
-- All standard `RegExp` instance properties and methods are copied directly to the result, preserving their native behavior.
 
-  ```ts
-  // methods
-  typedRegExp('...').exec('abc'); // StrictRegExpExecArray | null
-  typedRegExp('^\\w+$').test('abc'); // boolean
-  // metadata
-  typedRegExp('...').source; // '...'
-  typedRegExp('', 'gid').flags; // 'dgi'
-  // flag availability
-  typedRegExp('', 'dgi').global; // true
-  typedRegExp('', 'dgi').sticky; // false
-  //   ...
-  ```
-  > Symbols are filtered out. While their typing is customizable, their main use case is to be a reference point for the `string.prototype` methods, which have fixed typing that cannot be altered without overriding the prototype methods' typings directly.
-- `String.prototype` methods: All string methods that accept a RegExp as the first argument (e.g. `.replace`, `.match`, `.search`, `.split`) are re-exposed as inversed functions with equivalent or improved type safety. These act as a direct alternative to their `string.prototype` counterparts.
-  
-  i.e.; `typedRegExp(pattern).matchIn(string)` executes the same runtime code as `string.match(pattern)`.
+The function signature is:
+```typescript
+typedRegExp(pattern: string, flags?: string)
+```
 
-  ```ts
-  const res1 = typedRegExp('^(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})$').matchIn('2000-10-24'); // Equivalent to '2000-10-24'.match('^(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})$');
-  const res2 = typedRegExp('\\w').searchIn('hello');
-  const res3 = typedRegExp(' ').splitIn('hello world!');
-  const res4 = typedRegExp('^(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})$').replaceIn('2000-10-24', (match, year, month, day, offset, string, groups) => `${groups.day}/${groups.month}/${groups.year}`);
-  
-  // 'matchAllIn', 'replaceAllIn' only available given 'g' flag.
-  const res5 = typedRegExp('\\d', 'g').matchAllIn('2000-10-24'); // Equivalent to '2000-10-24'.matchAll('\\d', 'g');
-  const res6 = typedRegExp('\\d', 'g').replaceAllIn('My phone number is 123-456-7890', '#');
-  ```
-  > These methods are suffixed with 'In', e.g. `replaceIn`, `matchIn`, `searchIn`, `splitIn`.
-- Fallback to native `RegExp`: In case a regular `RegExp` instance is necessary for any reason, it can be referenced by the `regExp` property.
+### Standard RegExp Methods
 
-  ```ts
-  const regExp = typedRegExp(source).regExp;
-  //   ?^ RegExp
-  ```
-  > This is the same `RegExp` instance that is used under the hood to handle all `typedRegExp` runtime behaviours.
-> There are no intermediate objects for the sole reason of convenience / ease of use.
+All standard `RegExp` methods work exactly as expected, but with equivalent or improved typing:
+
+```typescript
+const pattern = typedRegExp('(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})', 'gid');
+
+// Standard methods
+pattern.exec('2000-10-24')!.groups;  // { year: string; month: string; day: string; }
+pattern.test('2000-10-24');  // boolean
+
+// Access RegExp properties
+pattern.source;  // "(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})"
+pattern.flags;   // "dgi"
+pattern.global;  // true
+pattern.sticky;  // false
+//  ...
+```
+
+### Inversed String Methods
+
+Each `RegExp`-related `string.prototype` method is available as `${string}In` with equivalent or improved typing:
+
+```typescript
+const datePattern = typedRegExp('(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})');
+const text = '2000-10-24';
+
+// Instead of: text.match(pattern)
+const match = datePattern.matchIn(text);
+
+// Instead of: text.replace(pattern, replacement)
+const formatted1 = datePattern.replaceIn(text, '$<day>/$<month>/$<year>');
+const formatted2 = datePattern.replaceIn(match, year, month, day, offset, string, groups) => `${groups.day}/${groups.month}/${groups.year}`
+
+// Other inversed methods
+datePattern.searchIn(text);    // like text.search(pattern)
+datePattern.splitIn(text);     // like text.split(pattern)
+```
+
+### Global Flag Methods
+
+When using the global (`g`) flag, additional methods become available:
+
+```typescript
+const digitPattern = typedRegExp('\\d', 'g');
+
+// Only available with 'g' flag
+digitPattern.matchAllIn('2000-10-24');     // like text.matchAll(pattern)
+digitPattern.replaceAllIn('123-456', '#'); // like text.replaceAll(pattern, replacement)
+```
+
+### Advanced Usage
+
+If you need access to the underlying `RegExp` instance:
+
+```typescript
+const pattern = typedRegExp('\\d+');
+const nativeRegExp = pattern.regExp; // Regular RegExp instance
+```
+
+> **Note:** The `typedRegExp` result is not a `RegExp` instance itself, but a plain object that copies all `RegExp` properties and methods while providing enhanced typing.
 ## ✨ Features
 - ✅ Strictly typed named & unnamed capture groups
 - ✅ Supports contextual awareness

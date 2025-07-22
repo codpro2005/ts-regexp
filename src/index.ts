@@ -371,7 +371,7 @@ type Parse<T extends string> = string extends T
         namedCaptures: Record<string, string | undefined>;
     }
     // @ts-expect-error: this should terminate
-    : Distribute<ContextualizeToken<IndexifyTokenDeep<TokenTree<`(_${T}_)`>>>>
+    : Distribute<ContextualizeToken<IndexifyTokenDeep<TokenTree<`(\\\\${T})`>>>>
 ;
 
 type Remove<Ts extends unknown[], TMatch extends Ts[number]> = unknown extends AsLinked<Ts, infer First, infer Rest>

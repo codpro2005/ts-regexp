@@ -50,7 +50,7 @@ type IsSatisfied<T, TMember extends T> = TMember;
 type Is<T extends boolean, TIf, TElse> = T extends true
     ? TIf
     : TElse
-; // Works with T of `boolean`;
+; // Works with T of `boolean`
 type CharOfInternal<T extends string> = T extends `${infer First}${infer Rest}`
     ? First | CharOfInternal<Rest>
     : never
@@ -235,7 +235,7 @@ type Token = IsSatisfied<{ type: string },
 }>;
 type Groups = (Token & {type: 'groups'})['groups'];
 // Indexification (DFS)
-//  Utils (DFS math)
+//  Utils
 type FlattenGroupsDeep<TGroups extends Groups> = unknown extends AsLinked<TGroups, infer First, infer Rest>
     ? [First, ...FlattenTokenDeep<First['inner']>, ...FlattenGroupsDeep<
         // @ts-expect-error: TS cannot infer that this extends 'Groups'
@@ -472,7 +472,7 @@ export const typedRegExp = <
     > & Omit<Captures, number extends Captures['length']
         ? never
         : number
-    > & (RegExpExecArray extends {indices: infer Indices} // Potentially breaks something niche?
+    > & (RegExpExecArray extends { indices: infer Indices }
         ? Is<HasFlag<'d'>,
             {indices: NonNullable<Indices>},
             {}
@@ -518,8 +518,7 @@ export const typedRegExp = <
         },
         {}
     );
-    // for some reason GlobalMatches hits recursion limit faster?
-    type GlobalMatches = [Head<Captures>, ...Head<Captures>[]]; // can't be empty arr. Either null or one+.
+    type GlobalMatches = [Head<Captures>, ...Head<Captures>[]];
     const ret = {
         regExp,
         ...toPOJO(regExp as Override<typeof regExp, {
@@ -529,17 +528,14 @@ export const typedRegExp = <
             global: HasFlag<'g'>,
             hasIndices: HasFlag<'d'>,
             ignoreCase: HasFlag<'i'>,
-            // lastIndex: number, // the only mutable prop. Can be set manually or under the hood through 'g' and 'y' flag.
             multiLine: HasFlag<'m'>,
             source: TPattern extends ''
                 ? '(?:)'
                 : TPattern
             ,
             sticky: HasFlag<'y'>,
-            // test: () => ,
             unicode: HasFlag<'u'>,
             unicodeSets: HasFlag<'v'>,
-            // compile: () => ,
         }>),
         matchIn: <T extends string>(
             source: T
@@ -552,13 +548,13 @@ export const typedRegExp = <
         splitIn: (source: string, ...args: Tail<Parameters<string['split']>>) => source.split(regExp, ...args),
         ...ternaryGlobalMethods(isGlobal)
     };
-    // ternaryGlobalMethods + code below specifically to help TS for discriminated unions (global + hasIndices). Potentially remove as it's unscalable and weird.
+    // code below specifically to help TS for discriminated unions (global + hasIndices).
     type StrictRegExpExecArrayForHasIndices<T extends boolean, TString extends string> = StrictRegExpExecArray<TString> & Is<T, {indices: NonNullable<RegExpExecArray['indices']>}, {}>;
     type GlobalBehavior<T extends boolean> = {
         global: T
     } & ReturnType<typeof ternaryGlobalMethods<T>>;
     type HasIndicesOnExistence<T extends boolean> = 'hasIndices' extends keyof RegExp
-        ? {hasIndices: T}
+        ? { hasIndices: T }
         : {}
     ;
     type GlobalTrueIndicesBehavior<T extends boolean> = HasIndicesOnExistence<T> & {
@@ -581,113 +577,3 @@ export const typedRegExp = <
         )
     ) & (IndicesBehavior<false> | IndicesBehavior<true>)>;
 };
-
-typedRegExp('?<named>').matchIn('(?<named>)')!.groups; // HANDLE!
-
-// #region Runtime tests
-
-// #region Version tests
-
-// // < es2018
-const normalGroups = new RegExp('').exec('')!.groups;
-const typedGroups = typedRegExp('').exec('')!.groups;
-// // < es2022
-const normalHasIndices = new RegExp('').hasIndices;
-const typedHasIndices = typedRegExp('').hasIndices;
-const normalIndices = new RegExp('').exec('')!.indices;
-const typedIndices = typedRegExp('', 'd').exec('')!.indices;
-
-// #endregion
-
-// #region General tests
-
-const check = typedRegExp('')[Symbol.match](''); // Error!
-
-const conditionFlagsSuccess = typedRegExp('(?<hello>)(?<world>)', 'd').exec('')!.indices;
-const conditionFlagsFail = typedRegExp('(?<hello>)(?<world>)', '').exec('')!.indices; // Error!
-
-const gettingFlags = typedRegExp('lolxd', 'gid').flags; // 'dgi'
-const gettingFlagsNonLiteral = typedRegExp('lolxd', 'gid' as string).flags; // string
-const gettingSource = typedRegExp('lolxd', 'gid').source; // 'lolxd'
-const gettingSourceEmpty = typedRegExp('', 'gid').source; // '(?:)'
-const getTypedRegExpNonLiteralSource = <const TFlags extends string>(flags: ValidatedFlags<TFlags>) => typedRegExp('(?<namedGroup>))' as string, flags);
-const typedRegExpNonLiteralSourceGlobalFlags = getTypedRegExpNonLiteralSource('gid');
-const gettingSourceNonLiteral0 = typedRegExpNonLiteralSourceGlobalFlags.exec('')![0]; // string
-const gettingSourceNonLiteralIndex = typedRegExpNonLiteralSourceGlobalFlags.exec('')![34]; // string | undefined
-const gettingSourceNonLiteral = typedRegExpNonLiteralSourceGlobalFlags.exec('')!.groups; // RegExp['groups']
-const gettingSourceNonLiteralMatchGlobal = typedRegExpNonLiteralSourceGlobalFlags.matchIn(''); // [string, ...string[]] | null
-const gettingSourceNonLiteralMatchIndices = getTypedRegExpNonLiteralSource('id').matchIn(''); // StrictRegExpExecArrayForHasIndices<true> | null
-const gettingSourceNonLiteralMatch = getTypedRegExpNonLiteralSource('i').matchIn(''); // StrictRegExpExecArrayForHasIndices<false> | null
-const gettingSourceNonLiteralReplace = typedRegExpNonLiteralSourceGlobalFlags.replaceIn('source', (...args) => {
-    const match = args[0]; // string
-    const rest = args[1]; // string | number | Record<string, string | undefined> | undefined
-    return '';
-});
-const matched1 = typedRegExp('(?<hello>)(?<world>)', 'dg').matchIn('')![0]; // string
-const matched2 = typedRegExp('(?<hello>)(?<world>)', 'dg').matchIn('')![1]; // string | undefined
-const replacedThroughValue = typedRegExp('((?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2}))?', '').replaceIn('', 'replacement-value');
-const replaceThroughReplacer = typedRegExp('(?<main>..(?<nested>.))?', '').replaceIn('', (match, main, nested, offset, string, groups) => groups.nested!);
-const replaceThroughReplacerNotAllArgs = typedRegExp('(?<main>..(?<nested>.))?', '').replaceIn('', (match, main, nested, offset, string, ...rest) => nested!); // todo (probably nothing that can be done): rest as destructured tuple instead of full Array?
-
-const interesting = typedRegExp('(?<a>...)|(?<b>...(?<bInner>))?|(?<c>...)').exec('dffdf')!;
-const interestingOut = interesting.groups.a;
-if (interesting.groups.bInner === undefined && interesting.groups.c === undefined) {
-    const interstingIn = interesting.groups.a; // string | undefined
-}
-
-const myTest = typedRegExp('(?<main>.(?<nested>.))?').exec('')!.groups;
-const main = myTest.main; // string | undefined
-if (myTest.nested === undefined) {
-    const inner = myTest.main; // undefined
-}
-
-const c = typedRegExp('(?<main>(?<nested>))?', 'g' as string);
-for (const match of 'matchAllIn' in c ? c.matchAllIn('') : []) {
-    type Out = typeof match.groups.nested;
-    if (match.groups.main) {
-        type In = typeof match.groups.nested;
-        const haa = match.indices; // should error
-        const lastGroup = match[3]; // should error
-    }
-    `Found ${match[0]} start=${match.index} end=${match.index + match[0].length}.`;
-}
-
-// #endregion
-
-// #region Non-literal tests
-
-const nonLiteralFlags = typedRegExp('(?<hello>)(?<world>)', 'dg' as string);
-if (nonLiteralFlags.hasIndices) {
-    const inds = nonLiteralFlags.exec('')!.indices; // RegExpIndicesArray
-    const inds2 = nonLiteralFlags.matchIn('')!.indices; // Error!
-    if (!nonLiteralFlags.global) {
-        const inds2_2 = nonLiteralFlags.matchIn('')!.indices; // RegExpIndicesArray
-    } else {
-        for (const l of nonLiteralFlags.matchAllIn('')) {
-            l.indices; // RegExpIndicesArray
-        }
-    }
-}
-const mtch = nonLiteralFlags.matchIn(''); // StrictRegExpExecArray | [string, ...string[]] | null
-if (nonLiteralFlags.global) {
-    const inmtch = nonLiteralFlags.matchIn(''); // [string, ...string[]] | null
-    for (const inmtch2 of nonLiteralFlags.matchAllIn('')) {
-        inmtch2.indices; // Error!
-        if ('indices' in inmtch2) {
-            const indices = inmtch2.indices; // RegExpIndicesArray
-        }
-    }
-    const rplcAll = nonLiteralFlags.replaceAllIn('', '');
-} else {
-    const inmtch = nonLiteralFlags.matchIn('')!; // StrictRegExpExecArray | null
-    inmtch.indices; // Error!
-    if ('indices' in inmtch) {
-        const indices = inmtch.indices; // RegExpIndicesArray
-    }
-}
-
-// #endregion
-
-// #endregion
-
-// #endregion

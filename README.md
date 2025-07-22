@@ -71,7 +71,7 @@ Each `RegExp`-related `string.prototype` method is available as `${MethodName}In
 
 ```typescript
 const datePattern = typedRegExp('(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})');
-const text = '2000-10-24';
+const text = '1976-11-21';
 
 // Instead of: text.match(pattern)
 const match = datePattern.matchIn(text); // typed match
@@ -93,7 +93,7 @@ When using the global (`g`) flag, additional methods become available:
 const digitPattern = typedRegExp('\\d', 'g');
 
 // Only available with 'g' flag
-digitPattern.matchAllIn('2000-10-24');     // like text.matchAll(pattern)
+digitPattern.matchAllIn('1973-12-08');     // like text.matchAll(pattern)
 digitPattern.replaceAllIn('123-456', '#'); // like text.replaceAll(pattern, replacement)
 ```
 

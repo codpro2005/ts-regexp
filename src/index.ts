@@ -237,8 +237,10 @@ type Groups = (Token & {type: 'groups'})['groups'];
 // Indexification (DFS)
 //  Utils (DFS math)
 type FlattenGroupsDeep<TGroups extends Groups> = unknown extends AsLinked<TGroups, infer First, infer Rest>
-// @ts-expect-error: TS cannot infer that 'Rest' extends 'Groups'
-    ? [First, ...FlattenTokenDeep<First['inner']>, ...FlattenGroupsDeep<Rest>]
+    ? [First, ...FlattenTokenDeep<First['inner']>, ...FlattenGroupsDeep<
+        // @ts-expect-error: TS cannot infer that this extends 'Groups'
+        Rest
+    >]
     : []
 ;
 type FlattenTokenDeep<TToken extends Token> = TToken extends { type: 'alternation' } ? [
@@ -255,16 +257,23 @@ type IndexifyGroupsDeep<TGroups extends Groups, TIndex extends number> = unknown
             index: TIndex,
             value: Omit<First, 'inner'> & { inner: IndexifyTokenDeepInternal<First['inner'], Increment<TIndex>> }
         },
-        // @ts-expect-error: TS cannot infer that 'Rest' extends 'Groups'
-        ...IndexifyGroupsDeep<Rest, Add<TIndex, FlattenGroupsDeep<[First]>['length'] & number>>
+        ...IndexifyGroupsDeep<
+            // @ts-expect-error: TS cannot infer that this extends 'Groups'
+            Rest,
+            Add<TIndex, FlattenGroupsDeep<[First]>['length'] & number>
+        >
     ]
     : []
 ;
 type IndexifyTokenDeepInternal<TToken extends Token, TIndex extends number> = TToken extends { type: 'alternation' } ? {
     type: 'alternation',
     left: IndexifyTokenDeepInternal<TToken['left'], TIndex>,
-    // @ts-expect-error: 'FlattenTokenDeep<TToken['left']>['length']' should terminate
-    right: IndexifyTokenDeepInternal<TToken['right'], Add<TIndex, FlattenTokenDeep<TToken['left']>['length'] & number>>
+    right: IndexifyTokenDeepInternal<TToken['right'], Add<
+        TIndex,
+        // @ts-expect-error: this should terminate
+        FlattenTokenDeep<TToken['left']>['length'] 
+            & number
+    >>
 } : TToken extends { type: 'groups' } ? {
         type: 'groups',
         groups: IndexifyGroupsDeep<TToken['groups'], TIndex>
@@ -302,8 +311,10 @@ type ContextualValue<T extends GroupWithIndex, TValue> = Record<T['index'], {
     reference: T['value']
 }>;
 type DeepUndefinedGroups<TGroups extends GroupWithIndexes> = unknown extends AsLinked<TGroups, infer First, infer Rest>
-    // @ts-expect-error: TS cannot infer that 'Rest' extends 'GroupWithIndexes'
-    ? ContextualValue<First, undefined> & DeepUndefinedToken<First['value']['inner']> & DeepUndefinedGroups<Rest>
+    ? ContextualValue<First, undefined> & DeepUndefinedToken<First['value']['inner']> & DeepUndefinedGroups<
+        // @ts-expect-error: TS cannot infer that this extends 'GroupWithIndexes'
+        Rest
+    >
     : {}
 ;
 type DeepUndefinedToken<TToken extends TokenWithIndex> = TToken extends { type: 'alternation' }
@@ -318,8 +329,10 @@ type ContextualizeGroups<TGroups extends GroupWithIndexes> = unknown extends AsL
             ? DeepUndefinedGroups<[First]>
             : never
         ) | (ContextualValue<First, string> & ContextualizeToken<First['value']['inner']>)
-    // @ts-expect-error: TS cannot infer that 'Rest' extends 'GroupWithIndexes'
-    ) & ContextualizeGroups<Rest>
+    ) & ContextualizeGroups<
+        // @ts-expect-error: TS cannot infer that this extends 'GroupWithIndexes'
+        Rest
+    >
     : {}
 ;
 type ContextualizeToken<TToken extends TokenWithIndex> = TToken extends { type: 'alternation' }
@@ -357,7 +370,7 @@ type Parse<T extends string> = string extends T
         captures: [string, ...(string | undefined)[]],
         namedCaptures: Record<string, string | undefined>;
     }
-    // @ts-expect-error: 'Distribute<ContextualizeToken<IndexifyTokenDeep<TokenTree<`(${T})`>>>>' should terminate
+    // @ts-expect-error: this should terminate
     : Distribute<ContextualizeToken<IndexifyTokenDeep<TokenTree<`(${T})`>>>>
 ;
 
@@ -373,8 +386,11 @@ type GetFlagsInternal<T extends string, TFlags extends Flag[]> = unknown extends
     ? `${FirstMatch<First, T> extends never
         ? ''
         : FirstMatch<First, T>
-    // @ts-expect-error: TS cannot infer that 'Rest' extends 'Flag[]'
-    }${GetFlagsInternal<T, Rest>}`
+    }${GetFlagsInternal<
+        T,
+        // @ts-expect-error: TS cannot infer that this extends 'Flag[]'
+        Rest
+    >}`
     : ''
 ;
 type GetFlags<T extends string> = string extends T
@@ -383,8 +399,11 @@ type GetFlags<T extends string> = string extends T
 ;
 type AreFlagsValid<TSource extends string, TFlags extends Flag[]> = TSource extends `${infer First}${infer Rest}`
     ? First extends TFlags[number]
-        // @ts-expect-error: TS cannot infer that 'Remove<TFlags, First>' extends 'Flag[]'
-        ? AreFlagsValid<Rest, Remove<TFlags, First>>
+        ? AreFlagsValid<
+            Rest,
+            // @ts-expect-error: TS cannot infer that this extends 'Flag[]'
+            Remove<TFlags, First>
+        >
         : false
     : true
 ;
@@ -562,3 +581,113 @@ export const typedRegExp = <
         )
     ) & (IndicesBehavior<false> | IndicesBehavior<true>)>;
 };
+
+typedRegExp('?<named>').matchIn('(?<named>)')!.groups; // HANDLE!
+
+// #region Runtime tests
+
+// #region Version tests
+
+// // < es2018
+const normalGroups = new RegExp('').exec('')!.groups;
+const typedGroups = typedRegExp('').exec('')!.groups;
+// // < es2022
+const normalHasIndices = new RegExp('').hasIndices;
+const typedHasIndices = typedRegExp('').hasIndices;
+const normalIndices = new RegExp('').exec('')!.indices;
+const typedIndices = typedRegExp('', 'd').exec('')!.indices;
+
+// #endregion
+
+// #region General tests
+
+const check = typedRegExp('')[Symbol.match](''); // Error!
+
+const conditionFlagsSuccess = typedRegExp('(?<hello>)(?<world>)', 'd').exec('')!.indices;
+const conditionFlagsFail = typedRegExp('(?<hello>)(?<world>)', '').exec('')!.indices; // Error!
+
+const gettingFlags = typedRegExp('lolxd', 'gid').flags; // 'dgi'
+const gettingFlagsNonLiteral = typedRegExp('lolxd', 'gid' as string).flags; // string
+const gettingSource = typedRegExp('lolxd', 'gid').source; // 'lolxd'
+const gettingSourceEmpty = typedRegExp('', 'gid').source; // '(?:)'
+const getTypedRegExpNonLiteralSource = <const TFlags extends string>(flags: ValidatedFlags<TFlags>) => typedRegExp('(?<namedGroup>))' as string, flags);
+const typedRegExpNonLiteralSourceGlobalFlags = getTypedRegExpNonLiteralSource('gid');
+const gettingSourceNonLiteral0 = typedRegExpNonLiteralSourceGlobalFlags.exec('')![0]; // string
+const gettingSourceNonLiteralIndex = typedRegExpNonLiteralSourceGlobalFlags.exec('')![34]; // string | undefined
+const gettingSourceNonLiteral = typedRegExpNonLiteralSourceGlobalFlags.exec('')!.groups; // RegExp['groups']
+const gettingSourceNonLiteralMatchGlobal = typedRegExpNonLiteralSourceGlobalFlags.matchIn(''); // [string, ...string[]] | null
+const gettingSourceNonLiteralMatchIndices = getTypedRegExpNonLiteralSource('id').matchIn(''); // StrictRegExpExecArrayForHasIndices<true> | null
+const gettingSourceNonLiteralMatch = getTypedRegExpNonLiteralSource('i').matchIn(''); // StrictRegExpExecArrayForHasIndices<false> | null
+const gettingSourceNonLiteralReplace = typedRegExpNonLiteralSourceGlobalFlags.replaceIn('source', (...args) => {
+    const match = args[0]; // string
+    const rest = args[1]; // string | number | Record<string, string | undefined> | undefined
+    return '';
+});
+const matched1 = typedRegExp('(?<hello>)(?<world>)', 'dg').matchIn('')![0]; // string
+const matched2 = typedRegExp('(?<hello>)(?<world>)', 'dg').matchIn('')![1]; // string | undefined
+const replacedThroughValue = typedRegExp('((?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2}))?', '').replaceIn('', 'replacement-value');
+const replaceThroughReplacer = typedRegExp('(?<main>..(?<nested>.))?', '').replaceIn('', (match, main, nested, offset, string, groups) => groups.nested!);
+const replaceThroughReplacerNotAllArgs = typedRegExp('(?<main>..(?<nested>.))?', '').replaceIn('', (match, main, nested, offset, string, ...rest) => nested!); // todo (probably nothing that can be done): rest as destructured tuple instead of full Array?
+
+const interesting = typedRegExp('(?<a>...)|(?<b>...(?<bInner>))?|(?<c>...)').exec('dffdf')!;
+const interestingOut = interesting.groups.a;
+if (interesting.groups.bInner === undefined && interesting.groups.c === undefined) {
+    const interstingIn = interesting.groups.a; // string | undefined
+}
+
+const myTest = typedRegExp('(?<main>.(?<nested>.))?').exec('')!.groups;
+const main = myTest.main; // string | undefined
+if (myTest.nested === undefined) {
+    const inner = myTest.main; // undefined
+}
+
+const c = typedRegExp('(?<main>(?<nested>))?', 'g' as string);
+for (const match of 'matchAllIn' in c ? c.matchAllIn('') : []) {
+    type Out = typeof match.groups.nested;
+    if (match.groups.main) {
+        type In = typeof match.groups.nested;
+        const haa = match.indices; // should error
+        const lastGroup = match[3]; // should error
+    }
+    `Found ${match[0]} start=${match.index} end=${match.index + match[0].length}.`;
+}
+
+// #endregion
+
+// #region Non-literal tests
+
+const nonLiteralFlags = typedRegExp('(?<hello>)(?<world>)', 'dg' as string);
+if (nonLiteralFlags.hasIndices) {
+    const inds = nonLiteralFlags.exec('')!.indices; // RegExpIndicesArray
+    const inds2 = nonLiteralFlags.matchIn('')!.indices; // Error!
+    if (!nonLiteralFlags.global) {
+        const inds2_2 = nonLiteralFlags.matchIn('')!.indices; // RegExpIndicesArray
+    } else {
+        for (const l of nonLiteralFlags.matchAllIn('')) {
+            l.indices; // RegExpIndicesArray
+        }
+    }
+}
+const mtch = nonLiteralFlags.matchIn(''); // StrictRegExpExecArray | [string, ...string[]] | null
+if (nonLiteralFlags.global) {
+    const inmtch = nonLiteralFlags.matchIn(''); // [string, ...string[]] | null
+    for (const inmtch2 of nonLiteralFlags.matchAllIn('')) {
+        inmtch2.indices; // Error!
+        if ('indices' in inmtch2) {
+            const indices = inmtch2.indices; // RegExpIndicesArray
+        }
+    }
+    const rplcAll = nonLiteralFlags.replaceAllIn('', '');
+} else {
+    const inmtch = nonLiteralFlags.matchIn('')!; // StrictRegExpExecArray | null
+    inmtch.indices; // Error!
+    if ('indices' in inmtch) {
+        const indices = inmtch.indices; // RegExpIndicesArray
+    }
+}
+
+// #endregion
+
+// #endregion
+
+// #endregion

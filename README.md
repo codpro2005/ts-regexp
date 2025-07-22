@@ -66,7 +66,7 @@ pattern.sticky;  // false
 
 ### Inversed String Methods
 
-Each `RegExp`-related `string.prototype` method is available as `${string}In` with equivalent or improved typing:
+Each `RegExp`-related `string.prototype` method is available as `${MethodName}In` with equivalent or improved typing:
 
 ```typescript
 const datePattern = typedRegExp('(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})');

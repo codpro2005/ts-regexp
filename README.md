@@ -37,7 +37,7 @@ Import and use `typedRegExp` just like the native `RegExp` constructor:
 import { typedRegExp } from 'ts-regex';
 
 const datePattern = typedRegExp('(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})');
-const emailPattern = typedRegExp('\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b', 'i');
+const emailPattern = typedRegExp('^(?<local>[a-z0-9._%+-]+)@(?<domain>[a-z0-9.-]+\.[a-z]{2,})$', 'i');
 ```
 
 The function signature is:
@@ -73,11 +73,11 @@ const datePattern = typedRegExp('(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})
 const text = '2000-10-24';
 
 // Instead of: text.match(pattern)
-const match = datePattern.matchIn(text);
+const match = datePattern.matchIn(text); // typed match
 
 // Instead of: text.replace(pattern, replacement)
 const formatted1 = datePattern.replaceIn(text, '$<day>/$<month>/$<year>');
-const formatted2 = datePattern.replaceIn(match, year, month, day, offset, string, groups) => `${groups.day}/${groups.month}/${groups.year}`
+const formatted2 = datePattern.replaceIn(text, (match, year, month, day, offset, string, groups) => `${groups.day}/${groups.month}/${groups.year}`); // typed arguments
 
 // Other inversed methods
 datePattern.searchIn(text);    // like text.search(pattern)
@@ -98,6 +98,8 @@ digitPattern.replaceAllIn('123-456', '#'); // like text.replaceAll(pattern, repl
 
 ### Advanced Usage
 
+The `typedRegExp` result is a plain object, **not** a `RegExp` instance.
+
 If you need access to the underlying `RegExp` instance:
 
 ```typescript
@@ -105,7 +107,6 @@ const pattern = typedRegExp('\\d+');
 const nativeRegExp = pattern.regExp; // Regular RegExp instance
 ```
 
-> **Note:** The `typedRegExp` result is not a `RegExp` instance itself, but a plain object that copies all `RegExp` properties and methods while providing enhanced typing.
 ## ✨ Features
 - ✅ Strictly typed named & unnamed capture groups
 - ✅ Supports contextual awareness

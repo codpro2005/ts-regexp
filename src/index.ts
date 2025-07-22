@@ -513,7 +513,7 @@ export const typedRegExp = <
         {
             matchAllIn: <T extends string>(
                 source: T
-            ) => source.matchAll(regExp) as any as RegExpStringIterator<StrictRegExpExecArray<T>>,
+            ) => source.matchAll(regExp) as unknown as RegExpStringIterator<StrictRegExpExecArray<T>>,
             replaceAllIn
         },
         {}
@@ -543,7 +543,7 @@ export const typedRegExp = <
         }>),
         matchIn: <T extends string>(
             source: T
-        ) => source.match(regExp) as any as (Is<HasFlag<'g'>,
+        ) => source.match(regExp) as (Is<HasFlag<'g'>,
             GlobalMatches,
             StrictRegExpExecArray<T>
         >) | null,

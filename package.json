@@ -1,6 +1,6 @@
 {
   "name": "ts-regexp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A minimal, statically typed alternative to RegExp",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

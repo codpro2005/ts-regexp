@@ -44,6 +44,7 @@ The function signature is:
 ```typescript
 typedRegExp(pattern: string, flags?: string)
 ```
+> Note: `typedRegExp` returns a plain object, **not** a `RegExp` instance.
 
 ### Standard RegExp Methods
 
@@ -64,7 +65,7 @@ pattern.sticky;  // false
 //  ...
 ```
 
-### Inversed String Methods
+### Regex-first Methods
 
 Each `RegExp`-related `string.prototype` method is available as `${MethodName}In` with equivalent or improved typing:
 
@@ -98,8 +99,6 @@ digitPattern.replaceAllIn('123-456', '#'); // like text.replaceAll(pattern, repl
 
 ### Advanced Usage
 
-The `typedRegExp` result is a plain object, **not** a `RegExp` instance.
-
 If you need access to the underlying `RegExp` instance:
 
 ```typescript
@@ -121,6 +120,6 @@ const nativeRegExp = pattern.regExp; // Regular RegExp instance
 
 
 ## 📘 API
-> ⚠️ **Work in Progress**
+> 📋 **Planned**
 
 For now, refer to [Examples PLACEHOLDER](https://www.typescriptlang.org/play?#code/...) or [Usage](#-usage)

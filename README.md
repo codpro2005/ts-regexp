@@ -2,7 +2,7 @@
 [![npm version](https://img.shields.io/npm/v/ts-regexp.svg)](https://www.npmjs.com/package/ts-regexp)
 [![npm monthly downloads](https://img.shields.io/npm/dm/ts-regexp.svg)](https://www.npmjs.com/package/ts-regexp)
 
-A minimal, statically typed alternative to JavaScript's RegExp.
+A strictly typed & minimal RegExp wrapper.
 
 ```ts
 const groups1 = new RegExp('^(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})$', 'g').exec('2000-10-24')!.groups;

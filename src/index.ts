@@ -243,13 +243,16 @@ type FlattenGroupsDeep<TGroups extends Groups> = unknown extends AsLinked<TGroup
     >]
     : []
 ;
-type FlattenTokenDeep<TToken extends Token> = TToken extends { type: 'alternation' } ? [
-    ...FlattenTokenDeep<TToken['left']>,
-    ...FlattenTokenDeep<TToken['right']>
-] : TToken extends { type: 'groups' }
-    ? FlattenGroupsDeep<TToken['groups']>
+type FlattenTokenDeepInternal<TToken extends Token, Limit extends unknown[]> = Limit extends [unknown, ...infer L]
+    ? TToken extends { type: 'alternation' } ? [
+        ...FlattenTokenDeepInternal<TToken['left'], L>,
+        ...FlattenTokenDeepInternal<TToken['right'], L>
+    ] : TToken extends { type: 'groups' }
+        ? FlattenGroupsDeep<TToken['groups']>
+        : never
     : never
 ;
+type FlattenTokenDeep<TToken extends Token> = FlattenTokenDeepInternal<TToken, Range<20>>;
 //  DFS
 type IndexifyGroupsDeep<TGroups extends Groups, TIndex extends number> = unknown extends AsLinked<TGroups, infer First, infer Rest>
     ? [
@@ -270,7 +273,6 @@ type IndexifyTokenDeepInternal<TToken extends Token, TIndex extends number> = TT
     left: IndexifyTokenDeepInternal<TToken['left'], TIndex>,
     right: IndexifyTokenDeepInternal<TToken['right'], Add<
         TIndex,
-        // @ts-expect-error: this should terminate
         FlattenTokenDeep<TToken['left']>['length'] 
             & number
     >>

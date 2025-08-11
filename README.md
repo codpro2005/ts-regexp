@@ -1,6 +1,10 @@
 # ts-regexp
 [![npm version](https://img.shields.io/npm/v/ts-regexp.svg)](https://www.npmjs.com/package/ts-regexp)
+[![bundle size](https://img.shields.io/bundlejs/size/ts-regexp)](https://www.npmjs.com/package/ts-regexp)
 [![npm monthly downloads](https://img.shields.io/npm/dm/ts-regexp.svg)](https://www.npmjs.com/package/ts-regexp)
+[![typescript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![license: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![github stars](https://img.shields.io/github/stars/codpro2005/ts-regexp.svg?style=social)](https://github.com/codpro2005/ts-regexp)
 
 A strictly typed & minimal RegExp wrapper.
 
@@ -23,7 +27,7 @@ yarn add ts-regexp
 # Using pnpm
 pnpm add ts-regexp
 ```
-2. Then import `typedRegExp`:
+2. Import `typedRegExp`:
 ```ts
 import { typedRegExp } from 'ts-regexp';
 ```

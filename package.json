@@ -30,6 +30,7 @@
   "keywords": [
     "regex",
     "regexp",
+    "regular-expression",
     "typescript",
     "type-safe",
     "type-level"

@@ -353,14 +353,14 @@ type Distribute<T extends Record<keyof T & GroupWithIndex['index'], { value: str
             ? never
             : K
         ]: T[K]
-    }, infer FilteredRecord>
+    }, infer CaptureRecord>
         ? {
-            captures: ToTuple<{ [K in keyof FilteredRecord]: FilteredRecord[K]['value'] }>,
+            captures: ToTuple<{ [K in keyof CaptureRecord]: CaptureRecord[K]['value'] }>,
             namedCaptures: {
-                [K in keyof FilteredRecord as FilteredRecord[K]['reference'] extends { name: infer Name }
+                [K in keyof CaptureRecord as CaptureRecord[K]['reference'] extends { name: infer Name }
                     ? Name & string
                     : never
-                ]: FilteredRecord[K]['value']
+                ]: CaptureRecord[K]['value']
             }
         }
         : never

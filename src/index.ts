@@ -463,6 +463,15 @@ export const typedRegExp = <
             ? true
             : false
     ;
+    // mustn't be inline and must be mapped for distributive reasons or smth idk
+    type OmitTupleNumberKey<TCaptures extends Captures> = {
+        [K in keyof TCaptures as K extends number
+            ? number extends TCaptures['length']
+                ? K
+                : never
+            : K
+        ]: TCaptures[K]
+    };
     type StrictRegExpExecArray<T extends string> = Override<
         Omit<RegExpExecArray, keyof unknown[] | 'indices'>,
         {
@@ -471,9 +480,8 @@ export const typedRegExp = <
                 : NamedCaptures,
             input: T
         }
-    > & Omit<Captures, number extends Captures['length']
-        ? never
-        : number
+    > & OmitTupleNumberKey<
+        Captures
     > & (RegExpExecArray extends { indices: infer Indices }
         ? Is<HasFlag<'d'>,
             {indices: NonNullable<Indices>},

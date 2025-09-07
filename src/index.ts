@@ -33,7 +33,6 @@ type Add<T extends number, T2 extends number> = T2 extends 0
 type Prettify<T> = {
   [K in keyof T]: T[K];
 } & {}; // Thanks Matt!
-// To Tuple:
 type ToTupleInternal<TRecord extends Record<number, unknown>, Index extends number> = keyof TRecord extends never
     ? []
     : [
@@ -46,7 +45,7 @@ type ToTupleInternal<TRecord extends Record<number, unknown>, Index extends numb
 ;
 type ToTuple<TRecord extends Record<number, unknown>> = ToTupleInternal<TRecord, 0>;
 
-type IsSatisfied<T, TMember extends T> = TMember;
+type IsSatisfied<T, TCandidate extends T> = TCandidate;
 type Is<T extends boolean, TIf, TElse> = T extends true
     ? TIf
     : TElse
@@ -240,52 +239,52 @@ type Token = IsSatisfied<{ type: string },
 type Groups = (Token & {type: 'groups'})['groups'];
 // Indexification (DFS)
 //  Utils
-type FlattenGroupsDeep<TGroups extends Groups> = unknown extends AsLinked<TGroups, infer First, infer Rest>
-    ? [First, ...FlattenTokenDeep<First['inner']>, ...FlattenGroupsDeep<
+type FlattenGroups<TGroups extends Groups> = unknown extends AsLinked<TGroups, infer First, infer Rest>
+    ? [First, ...FlattenToken<First['inner']>, ...FlattenGroups<
         // @ts-expect-error: TS cannot infer that this extends 'Groups'
         Rest
     >]
     : []
 ;
-type FlattenTokenDeepInternal<TToken extends Token, Limit extends unknown[]> = Limit extends [unknown, ...infer L]
+type FlattenTokenInternal<TToken extends Token, Limit extends unknown[]> = Limit extends [unknown, ...infer L]
     ? TToken extends { type: 'alternation' } ? [
-        ...FlattenTokenDeepInternal<TToken['left'], L>,
-        ...FlattenTokenDeepInternal<TToken['right'], L>
+        ...FlattenTokenInternal<TToken['left'], L>,
+        ...FlattenTokenInternal<TToken['right'], L>
     ] : TToken extends { type: 'groups' }
-        ? FlattenGroupsDeep<TToken['groups']>
+        ? FlattenGroups<TToken['groups']>
         : never
     : never
 ;
-type FlattenTokenDeep<TToken extends Token> = FlattenTokenDeepInternal<TToken, Range<20>>;
+type FlattenToken<TToken extends Token> = FlattenTokenInternal<TToken, Range<20>>;
 //  DFS
-type IndexifyGroupsDeep<TGroups extends Groups, TIndex extends number> = unknown extends AsLinked<TGroups, infer First, infer Rest>
+type IndexGroups<TGroups extends Groups, TIndex extends number> = unknown extends AsLinked<TGroups, infer First, infer Rest>
     ? [
         {
             index: TIndex,
-            value: Omit<First, 'inner'> & { inner: IndexifyTokenDeepInternal<First['inner'], Increment<TIndex>> }
+            value: Omit<First, 'inner'> & { inner: IndexTokenInternal<First['inner'], Increment<TIndex>> }
         },
-        ...IndexifyGroupsDeep<
+        ...IndexGroups<
             // @ts-expect-error: TS cannot infer that this extends 'Groups'
             Rest,
-            Add<TIndex, FlattenGroupsDeep<[First]>['length'] & number>
+            Add<TIndex, FlattenGroups<[First]>['length'] & number>
         >
     ]
     : []
 ;
-type IndexifyTokenDeepInternal<TToken extends Token, TIndex extends number> = TToken extends { type: 'alternation' } ? {
+type IndexTokenInternal<TToken extends Token, TIndex extends number> = TToken extends { type: 'alternation' } ? {
     type: 'alternation',
-    left: IndexifyTokenDeepInternal<TToken['left'], TIndex>,
-    right: IndexifyTokenDeepInternal<TToken['right'], Add<
+    left: IndexTokenInternal<TToken['left'], TIndex>,
+    right: IndexTokenInternal<TToken['right'], Add<
         TIndex,
-        FlattenTokenDeep<TToken['left']>['length'] 
+        FlattenToken<TToken['left']>['length'] 
             & number
     >>
 } : TToken extends { type: 'groups' } ? {
         type: 'groups',
-        groups: IndexifyGroupsDeep<TToken['groups'], TIndex>
+        groups: IndexGroups<TToken['groups'], TIndex>
     } : never
 ;
-type IndexifyTokenDeep<TToken extends Token> = IndexifyTokenDeepInternal<TToken, 0>;
+type IndexToken<TToken extends Token> = IndexTokenInternal<TToken, 0>;
 //  TokenWithIndex type
 type TokenWithIndex = IsSatisfied<{type: string}, 
 {
@@ -316,23 +315,23 @@ type ContextualValue<T extends GroupWithIndex, TValue> = Record<T['index'], {
     value: TValue,
     reference: T['value']
 }>;
-type DeepUndefinedGroups<TGroups extends GroupWithIndexes> = unknown extends AsLinked<TGroups, infer First, infer Rest>
-    ? ContextualValue<First, never> & DeepUndefinedToken<First['value']['inner']> & DeepUndefinedGroups<
+type UnsetGroups<TGroups extends GroupWithIndexes> = unknown extends AsLinked<TGroups, infer First, infer Rest>
+    ? ContextualValue<First, never> & UnsetToken<First['value']['inner']> & UnsetGroups<
         // @ts-expect-error: TS cannot infer that this extends 'GroupWithIndexes'
         Rest
     >
     : {}
 ;
-type DeepUndefinedToken<TToken extends TokenWithIndex> = TToken extends { type: 'alternation' }
-    ? DeepUndefinedToken<TToken['left']> & DeepUndefinedToken<TToken['right']>
+type UnsetToken<TToken extends TokenWithIndex> = TToken extends { type: 'alternation' }
+    ? UnsetToken<TToken['left']> & UnsetToken<TToken['right']>
     : TToken extends { type: 'groups' }
-        ? DeepUndefinedGroups<TToken['groups']>
+        ? UnsetGroups<TToken['groups']>
         : never
 ;
 type ContextualizeGroups<TGroups extends GroupWithIndexes> = unknown extends AsLinked<TGroups, infer First, infer Rest>
     ? (
         (First['value']['isOptional'] extends true
-            ? DeepUndefinedGroups<[First]>
+            ? UnsetGroups<[First]>
             : never
         ) | (ContextualValue<First, string> & ContextualizeToken<First['value']['inner']>)
     ) & ContextualizeGroups<
@@ -343,8 +342,8 @@ type ContextualizeGroups<TGroups extends GroupWithIndexes> = unknown extends AsL
 ;
 type ContextualizeToken<TToken extends TokenWithIndex> = TToken extends { type: 'alternation' }
     ? (
-        (ContextualizeToken<TToken['left']> & DeepUndefinedToken<TToken['right']>) |
-        (ContextualizeToken<TToken['right']> & DeepUndefinedToken<TToken['left']>)
+        (ContextualizeToken<TToken['left']> & UnsetToken<TToken['right']>) |
+        (ContextualizeToken<TToken['right']> & UnsetToken<TToken['left']>)
     )
     : TToken extends { type: 'groups' }
         ? ContextualizeGroups<TToken['groups']>
@@ -377,7 +376,7 @@ type Parse<T extends string> = string extends T
         namedCaptures: Record<string, string | undefined>;
     }
     // @ts-expect-error: this should terminate
-    : Distribute<ContextualizeToken<IndexifyTokenDeep<TokenTree<`(\\\\${T})`>>>>
+    : Distribute<ContextualizeToken<IndexToken<TokenTree<`(\\\\${T})`>>>>
 ;
 
 type Remove<Ts extends unknown[], TMatch extends Ts[number]> = unknown extends AsLinked<Ts, infer First, infer Rest>
@@ -389,10 +388,7 @@ type Remove<Ts extends unknown[], TMatch extends Ts[number]> = unknown extends A
 type Flags = ['d', 'g', 'i', 'm', 's', 'u' | 'v', 'y'];
 type Flag = Flags[number];
 type GetFlagsInternal<T extends string, TFlags extends Flag[]> = unknown extends AsLinked<TFlags, infer First, infer Rest>
-    ? `${FirstMatch<First, T> extends never
-        ? ''
-        : FirstMatch<First, T>
-    }${GetFlagsInternal<
+    ? `${Fallback<FirstMatch<First, T>, ''>}${GetFlagsInternal<
         T,
         // @ts-expect-error: TS cannot infer that this extends 'Flag[]'
         Rest

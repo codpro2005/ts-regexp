@@ -83,6 +83,10 @@ type Override<TOriginal, TNew> = Omit<
         Extract<keyof TOriginal, keyof TNew>
     >
 ;
+type Fallback<T, TFall> = [T] extends [never]
+    ? TFall
+    : T
+;
 
 type Numeric<T extends string> = T extends `${infer N extends number}`
     ? N
@@ -313,7 +317,7 @@ type ContextualValue<T extends GroupWithIndex, TValue> = Record<T['index'], {
     reference: T['value']
 }>;
 type DeepUndefinedGroups<TGroups extends GroupWithIndexes> = unknown extends AsLinked<TGroups, infer First, infer Rest>
-    ? ContextualValue<First, undefined> & DeepUndefinedToken<First['value']['inner']> & DeepUndefinedGroups<
+    ? ContextualValue<First, never> & DeepUndefinedToken<First['value']['inner']> & DeepUndefinedGroups<
         // @ts-expect-error: TS cannot infer that this extends 'GroupWithIndexes'
         Rest
     >
@@ -355,12 +359,12 @@ type Distribute<T extends Record<keyof T & GroupWithIndex['index'], { value: str
         ]: T[K]
     }, infer CaptureRecord>
         ? {
-            captures: ToTuple<{ [K in keyof CaptureRecord]: CaptureRecord[K]['value'] }>,
+            captures: ToTuple<{ [K in keyof CaptureRecord]: Fallback<CaptureRecord[K]['value'], undefined> }>,
             namedCaptures: {
                 [K in keyof CaptureRecord as CaptureRecord[K]['reference'] extends { name: infer Name }
                     ? Name & string
                     : never
-                ]: CaptureRecord[K]['value']
+                ]: Fallback<CaptureRecord[K]['value'], undefined>
             }
         }
         : never

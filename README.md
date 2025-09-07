@@ -6,7 +6,7 @@
 [![license: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![github stars](https://img.shields.io/github/stars/codpro2005/ts-regexp.svg?style=social)](https://github.com/codpro2005/ts-regexp)
 
-A strictly typed & minimal RegExp wrapper.
+A RegExp wrapper providing stronger type safety.
 
 ```ts
 const groups1 = new RegExp('^(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})$', 'g').exec('9999-12-31')!.groups;

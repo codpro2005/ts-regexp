@@ -2,13 +2,13 @@
 //  Compensation
 type As<T, _Infer extends T> = unknown;
 type Head<T extends unknown[]> = T[0];
-type Tail<T extends unknown[]> = T extends [infer _, ...infer MyTail]
-    ? MyTail
+type Tail<T extends unknown[]> = T extends [infer _, ...infer Rest]
+    ? Rest
     : never
 ;
 type AsLinked<
     T extends unknown[],
-    InferFirst extends Head<T>,
+    _InferFirst extends Head<T>,
     InferRest extends Tail<T>
 > = InferRest extends unknown[]
     ? unknown
@@ -229,7 +229,7 @@ type Token = IsSatisfied<{ type: string },
         inner: Token
     } & IsSatisfied<{ isCaptured: boolean },
             { isCaptured: false } |
-            ({ isCaptured: true, isNamed: boolean } & IsSatisfied<{ isNamed: boolean },
+            ({ isCaptured: true } & IsSatisfied<{ isNamed: boolean },
                 { isNamed: false } |
                 { isNamed: true, name: string }
             >)
@@ -240,7 +240,11 @@ type Groups = (Token & {type: 'groups'})['groups'];
 // Indexification (DFS)
 //  Utils
 type FlattenGroups<TGroups extends Groups> = unknown extends AsLinked<TGroups, infer First, infer Rest>
-    ? [First, ...FlattenToken<First['inner']>, ...FlattenGroups<Rest>]
+    ? [
+        First,
+        ...FlattenToken<First['inner']>,
+        ...FlattenGroups<Rest>
+    ]
     : []
 ;
 type FlattenTokenInternal<TToken extends Token, Limit extends unknown[]> = Limit extends [unknown, ...infer L]
@@ -309,7 +313,9 @@ type ContextualValue<T extends GroupWithIndex, TValue> = Record<T['index'], {
     reference: T['value']
 }>;
 type UnsetGroups<TGroups extends GroupWithIndexes> = unknown extends AsLinked<TGroups, infer First, infer Rest>
-    ? ContextualValue<First, never> & UnsetToken<First['value']['inner']> & UnsetGroups<Rest>
+    ? ContextualValue<First, never>
+        & UnsetToken<First['value']['inner']>
+        & UnsetGroups<Rest>
     : {}
 ;
 type UnsetToken<TToken extends TokenWithIndex> = TToken extends { type: 'alternation' }
@@ -347,8 +353,12 @@ type Distribute<T extends Record<keyof T & GroupWithIndex['index'], { value: str
         ? {
             captures: ToTuple<{ [K in keyof CaptureRecord]: Fallback<CaptureRecord[K]['value'], undefined> }>,
             namedCaptures: {
-                [K in keyof CaptureRecord as CaptureRecord[K]['reference'] extends { name: infer Name }
-                    ? Name & string
+                [K in keyof CaptureRecord as CaptureRecord[K]['reference'] extends {
+                    isCaptured: true,
+                    isNamed: true,
+                    name: infer Name extends string
+                }
+                    ? Name
                     : never
                 ]: Fallback<CaptureRecord[K]['value'], undefined>
             }

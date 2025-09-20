@@ -2,7 +2,7 @@
 //  Compensation
 type As<T, _Infer extends T> = unknown;
 type Head<T extends unknown[]> = T[0];
-type Tail<T extends unknown[]> = T extends [unknown, ...infer MyTail]
+type Tail<T extends unknown[]> = T extends [infer _, ...infer MyTail]
     ? MyTail
     : never
 ;
@@ -240,10 +240,7 @@ type Groups = (Token & {type: 'groups'})['groups'];
 // Indexification (DFS)
 //  Utils
 type FlattenGroups<TGroups extends Groups> = unknown extends AsLinked<TGroups, infer First, infer Rest>
-    ? [First, ...FlattenToken<First['inner']>, ...FlattenGroups<
-        // @ts-expect-error: TS cannot infer that this extends 'Groups'
-        Rest
-    >]
+    ? [First, ...FlattenToken<First['inner']>, ...FlattenGroups<Rest>]
     : []
 ;
 type FlattenTokenInternal<TToken extends Token, Limit extends unknown[]> = Limit extends [unknown, ...infer L]
@@ -263,11 +260,7 @@ type IndexGroups<TGroups extends Groups, TIndex extends number> = unknown extend
             index: TIndex,
             value: Omit<First, 'inner'> & { inner: IndexTokenInternal<First['inner'], Increment<TIndex>> }
         },
-        ...IndexGroups<
-            // @ts-expect-error: TS cannot infer that this extends 'Groups'
-            Rest,
-            Add<TIndex, FlattenGroups<[First]>['length'] & number>
-        >
+        ...IndexGroups<Rest, Add<TIndex, FlattenGroups<[First]>['length'] & number>>
     ]
     : []
 ;
@@ -316,10 +309,7 @@ type ContextualValue<T extends GroupWithIndex, TValue> = Record<T['index'], {
     reference: T['value']
 }>;
 type UnsetGroups<TGroups extends GroupWithIndexes> = unknown extends AsLinked<TGroups, infer First, infer Rest>
-    ? ContextualValue<First, never> & UnsetToken<First['value']['inner']> & UnsetGroups<
-        // @ts-expect-error: TS cannot infer that this extends 'GroupWithIndexes'
-        Rest
-    >
+    ? ContextualValue<First, never> & UnsetToken<First['value']['inner']> & UnsetGroups<Rest>
     : {}
 ;
 type UnsetToken<TToken extends TokenWithIndex> = TToken extends { type: 'alternation' }
@@ -334,10 +324,7 @@ type ContextualizeGroups<TGroups extends GroupWithIndexes> = unknown extends AsL
             ? UnsetGroups<[First]>
             : never
         ) | (ContextualValue<First, string> & ContextualizeToken<First['value']['inner']>)
-    ) & ContextualizeGroups<
-        // @ts-expect-error: TS cannot infer that this extends 'GroupWithIndexes'
-        Rest
-    >
+    ) & ContextualizeGroups<Rest>
     : {}
 ;
 type ContextualizeToken<TToken extends TokenWithIndex> = TToken extends { type: 'alternation' }
@@ -388,11 +375,7 @@ type Remove<Ts extends unknown[], TMatch extends Ts[number]> = unknown extends A
 type Flags = ['d', 'g', 'i', 'm', 's', 'u' | 'v', 'y'];
 type Flag = Flags[number];
 type GetFlagsInternal<T extends string, TFlags extends Flag[]> = unknown extends AsLinked<TFlags, infer First, infer Rest>
-    ? `${Fallback<FirstMatch<First, T>, ''>}${GetFlagsInternal<
-        T,
-        // @ts-expect-error: TS cannot infer that this extends 'Flag[]'
-        Rest
-    >}`
+    ? `${Fallback<FirstMatch<First, T>, ''>}${GetFlagsInternal<T, Rest>}`
     : ''
 ;
 type GetFlags<T extends string> = string extends T
@@ -403,7 +386,7 @@ type AreFlagsValid<TSource extends string, TFlags extends Flag[]> = TSource exte
     ? First extends TFlags[number]
         ? AreFlagsValid<
             Rest,
-            // @ts-expect-error: TS cannot infer that this extends 'Flag[]'
+            // @ts-expect-error: Excessive stack depth
             Remove<TFlags, First>
         >
         : false

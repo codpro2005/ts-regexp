@@ -148,13 +148,13 @@ type ResolveAlternation<T extends string> = T extends `${infer First}${infer Res
             : ResolveAlternation<Rest>
     : never
 ;
-type InferMin<S extends string> = S extends `${infer Min},${infer Max}`
+type InferMin<T extends string> = T extends `${infer Min},${infer Max}`
     ? Max extends ''
         ? ToNattyNumber<Min>
         : ToNattyNumber<Max> extends never
             ? never
             : ToNattyNumber<Min>
-    : ToNattyNumber<S>
+    : ToNattyNumber<T>
 //  Tree parser
 type GroupPatterns<T extends string> = T extends `?<${infer Name}>${infer TheRest}`
     ? {
@@ -413,11 +413,11 @@ const ternary = <TBoolean extends boolean>(condition: TBoolean) => <TIf, TElse>(
     ? TIf
     : TElse
 ;
+const getPrototypeOf = <T extends object>(instance: T) => Object.getPrototypeOf(instance) as T;
+const getOwnPropertyNames = <T extends object>(prototype: T) => Object.getOwnPropertyNames(prototype) as (keyof T & string)[];
 const toPOJO = <T extends object>(instance: T) => Object.fromEntries(
-    Object.getOwnPropertyNames(
-        Object.getPrototypeOf(instance)
-    ).map(name => {
-        const value = (instance as Record<keyof never, unknown>)[name];
+    getOwnPropertyNames(getPrototypeOf(instance)).map(name => {
+        const value = instance[name];
         return [
             name,
             typeof value === 'function'

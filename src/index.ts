@@ -353,12 +353,13 @@ type Distribute<T extends Record<keyof T & GroupWithIndex['index'], { value: str
         ? {
             captures: ToTuple<{ [K in keyof CaptureRecord]: Fallback<CaptureRecord[K]['value'], undefined> }>,
             namedCaptures: {
-                [K in keyof CaptureRecord as CaptureRecord[K]['reference'] extends {
-                    isCaptured: true,
-                    isNamed: true,
-                    name: infer Name extends string
-                }
-                    ? Name
+                [K in keyof CaptureRecord as unknown extends As<CaptureRecord[K]['reference'], infer Capture>
+                    ? Capture extends {
+                        isCaptured: true,
+                        isNamed: true
+                    }
+                        ? Capture['name']
+                        : never
                     : never
                 ]: Fallback<CaptureRecord[K]['value'], undefined>
             }

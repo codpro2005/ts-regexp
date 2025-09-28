@@ -343,7 +343,13 @@ type ContextualizeToken<TToken extends TokenWithIndex> = TToken extends { type: 
         : never
 ;
 // Distribution
-type Distribute<T extends Record<keyof T & GroupWithIndex['index'], { value: string | undefined, reference: GroupWithIndex['value'] }>> = T extends unknown
+type Distribute<T extends Record<
+    keyof T & GroupWithIndex['index'],
+    {
+        value: string,
+        reference: GroupWithIndex['value']
+    }
+>> = T extends unknown
     ? unknown extends As<{
         [K in keyof T as T[K]['reference']['isCaptured'] extends false
             ? never
@@ -374,7 +380,15 @@ type Parse<T extends string> = string extends T
         namedCaptures: Record<string, string | undefined>;
     }
     // @ts-expect-error: this should terminate
-    : Distribute<ContextualizeToken<IndexToken<TokenTree<`(\\\\${T})`>>>>
+    : Distribute<ContextualizeToken<IndexToken<{
+        type: 'groups',
+        groups: [{
+            isCaptured: true,
+            isNamed: false,
+            isOptional: false,
+            inner: TokenTree<T>
+        }]
+    }>>>
 ;
 
 type Remove<Ts extends unknown[], TMatch extends Ts[number]> = unknown extends AsLinked<Ts, infer First, infer Rest>

@@ -412,15 +412,7 @@ export type Parse<T extends string> = string extends T
 export type ParseCaptures<T extends string> = string extends T
     ? (string | undefined)[]
     // @ts-expect-error: this should terminate
-    : DistributeCaptures<ContextualizeToken<IndexToken<{
-        type: 'groups',
-        groups: [{
-            isCaptured: true,
-            isNamed: false,
-            isOptional: false,
-            inner: TokenTree<T>
-        }]
-    }>>>
+    : DistributeCaptures<ContextualizeToken<IndexToken<TokenTree<T>>>>
 ;
 
 type Remove<Ts extends unknown[], TMatch extends Ts[number]> = unknown extends AsLinked<Ts, infer First, infer Rest>
@@ -628,3 +620,4 @@ export const typedRegExp = <
     ) & (IndicesBehavior<false> | IndicesBehavior<true>)>;
 
 };
+

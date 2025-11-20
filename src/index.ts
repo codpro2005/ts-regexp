@@ -374,13 +374,45 @@ type Distribute<T extends Record<
     : never
 ;
 
-type Parse<T extends string> = string extends T
+type DistributeCaptures<T extends Record<
+    keyof T & GroupWithIndex['index'],
+    {
+        value: string,
+        reference: GroupWithIndex['value']
+    }
+>> = T extends unknown
+    ? unknown extends As<{
+        [K in keyof T as T[K]['reference']['isCaptured'] extends false
+            ? never
+            : K
+        ]: T[K]
+    }, infer CaptureRecord>
+        ? ToTuple<{ [K in keyof CaptureRecord]: Fallback<CaptureRecord[K]['value'], undefined> }>
+        : never
+    : never
+;
+
+export type Parse<T extends string> = string extends T
     ? {
         captures: [string, ...(string | undefined)[]],
         namedCaptures: Record<string, string | undefined>;
     }
     // @ts-expect-error: this should terminate
     : Distribute<ContextualizeToken<IndexToken<{
+        type: 'groups',
+        groups: [{
+            isCaptured: true,
+            isNamed: false,
+            isOptional: false,
+            inner: TokenTree<T>
+        }]
+    }>>>
+;
+
+export type ParseCaptures<T extends string> = string extends T
+    ? (string | undefined)[]
+    // @ts-expect-error: this should terminate
+    : DistributeCaptures<ContextualizeToken<IndexToken<{
         type: 'groups',
         groups: [{
             isCaptured: true,
@@ -594,4 +626,5 @@ export const typedRegExp = <
             & (GlobalFalseIndicesBehavior<false> | GlobalFalseIndicesBehavior<true>)
         )
     ) & (IndicesBehavior<false> | IndicesBehavior<true>)>;
+
 };

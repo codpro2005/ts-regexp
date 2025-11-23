@@ -101,7 +101,7 @@ pattern.matchAllIn('1973-12-08');     // like string.matchAll(pattern)
 pattern.replaceAllIn('123-456', '#'); // like string.replaceAll(pattern, replacement)
 ```
 
-### Advanced Usage
+### Fallback
 
 If you need access to the underlying `RegExp` instance:
 
@@ -111,16 +111,16 @@ const nativeRegExp = pattern.regExp; // Regular RegExp instance
 ```
 
 ## ✨ Features
-- ✅ Strictly typed named & unnamed capture groups
-- ✅ Supports contextual awareness
-- ✅ Parses:
-  - nested groups
+- Strictly typed named & unnamed capture groups
+- Supports contextual awareness
+- Parses:
   - different group types (non-capturing, lookarounds, named captures, etc.)
+  - nested groups
   - alternation
   - character classes and escaped characters
-- ✅ Infers group optionality from quantifiers (`?`, `*`, `{n,m}`)
-- ✅ Validates flags
-- ✅ Supports dynamic (non-literal) pattern + flag inputs
-## 📅 Project History
-[![latest release at 2025-09-07](https://img.shields.io/github/release-date-pre/codpro2005/ts-regexp)](https://github.com/codpro2005/ts-regexp/releases/latest)
-[![created at 2025-07-13](https://img.shields.io/github/created-at/codpro2005/ts-regexp)](https://github.com/codpro2005/ts-regexp/commits/main/)
+- Infers group optionality from quantifiers (`?`, `*`, `{n,m}`)
+- Validates flags
+- Supports dynamic (non-literal) pattern + flag inputs
+## Alternatives
+- **[arkregex](https://arktype.io/docs/blog/arkregex)** - A drop-in replacement for `new RegExp` that, in addition to this library, offers strict literal group typings, readable error messages with powerful validation and best practices suggestions. Maintained by [David Blass](https://github.com/ssalbdivad) (creator of ArkType) and actively updated.
+- **[magic-regexp](https://regexp.dev)** - A compiled-away, type-safe alternative with a fluent, chainable API that makes regex patterns more readable and maintainable. Instead of cryptic regex syntax, you write `exactly('foo').or('bar')` which compiles to native RegExp at build time with no runtime cost. Part of the [unjs](https://github.com/unjs) ecosystem.

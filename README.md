@@ -110,15 +110,17 @@ const pattern = typedRegExp('\\d+');
 const nativeRegExp = pattern.regExp; // Regular RegExp instance
 ```
 
-### Types
+## Type Utilities
 
-`ts-regexp` exposes some useful parsing types:
+`ts-regexp` exposes utility types for parsing regex patterns at the type level:
 
-> Parse<T extends string>
+### `Parse<T extends string>`
+
+Extracts both positional and named capture groups from a regex pattern.
 ```ts
-type X = Parse<'(?<a>0)|(?<b>1)'>;
+type Result = Parse<'(?<a>0)|(?<b>1)'>;
 /*
-type X = {
+type Result = {
     captures: [string, string, undefined];
     namedCaptures: {
         a: string;
@@ -133,18 +135,24 @@ type X = {
 }
 */
 ```
-> ParseCaptures<T extends string>
+
+### `ParseCaptures<T extends string>`
+
+Extracts only the positional capture groups as a tuple.
 ```ts
-type X = ParseCaptures<'(?<a>0)|(?<b>1)'>;
+type Result = ParseCaptures<'(?<a>0)|(?<b>1)'>;
 /*
-type X = [string, string, undefined] | [string, undefined, string]
+type Result = [string, string, undefined] | [string, undefined, string]
 */
 ```
-> ParseNamedCaptures<T extends string>
+
+### `ParseNamedCaptures<T extends string>`
+
+Extracts only the named capture groups as an object type.
 ```ts
-type X = ParseNamedCaptures<'(?<a>0)|(?<b>1)'>;
+type Result = ParseNamedCaptures<'(?<a>0)|(?<b>1)'>;
 /*
-type X = {
+type Result = {
     a: string;
     b: undefined;
 } | {

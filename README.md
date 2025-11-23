@@ -33,7 +33,7 @@ import { typedRegExp } from 'ts-regexp';
 ```
 ## 🧩 Usage
 
-### Basic Usage
+### Runtime wrapper
 
 Import and use `typedRegExp` just like the native `RegExp` constructor:
 
@@ -50,7 +50,7 @@ typedRegExp(pattern: string, flags?: string)
 ```
 > Note: `typedRegExp` returns a plain object, **not** a `RegExp` instance.
 
-### Standard RegExp Methods
+#### Standard RegExp Methods
 
 All standard `RegExp` methods work exactly as expected, but with equivalent or improved typing:
 
@@ -69,7 +69,7 @@ pattern.sticky;  // false
 //  ...
 ```
 
-### Regex-first Methods
+#### Regex-first Methods
 
 Each `RegExp`-related `string.prototype` method is available as `${MethodName}In` with equivalent or improved typing:
 
@@ -89,7 +89,7 @@ pattern.searchIn(string);    // like string.search(pattern)
 pattern.splitIn(string);     // like string.split(pattern)
 ```
 
-### Global Flag Methods
+#### Global Flag Methods
 
 When using the global (`g`) flag, additional methods become available:
 
@@ -101,13 +101,57 @@ pattern.matchAllIn('1973-12-08');     // like string.matchAll(pattern)
 pattern.replaceAllIn('123-456', '#'); // like string.replaceAll(pattern, replacement)
 ```
 
-### Fallback
+#### Fallback
 
 If you need access to the underlying `RegExp` instance:
 
 ```typescript
 const pattern = typedRegExp('\\d+');
 const nativeRegExp = pattern.regExp; // Regular RegExp instance
+```
+
+### Types
+
+`ts-regexp` exposes some useful parsing types:
+
+> Parse<T extends string>
+```ts
+type X = Parse<'(?<a>0)|(?<b>1)'>;
+/*
+type X = {
+    captures: [string, string, undefined];
+    namedCaptures: {
+        a: string;
+        b: undefined;
+    };
+} | {
+    captures: [string, undefined, string];
+    namedCaptures: {
+        b: string;
+        a: undefined;
+    };
+}
+*/
+```
+> ParseCaptures<T extends string>
+```ts
+type X = ParseCaptures<'(?<a>0)|(?<b>1)'>;
+/*
+type X = [string, string, undefined] | [string, undefined, string]
+*/
+```
+> ParseNamedCaptures<T extends string>
+```ts
+type X = ParseNamedCaptures<'(?<a>0)|(?<b>1)'>;
+/*
+type X = {
+    a: string;
+    b: undefined;
+} | {
+    b: string;
+    a: undefined;
+}
+*/
 ```
 
 ## ✨ Features

@@ -351,11 +351,12 @@ type ContextualizeToken<TToken extends TokenWithIndex> = TToken extends { type: 
         ? ContextualizeGroups<TToken['groups']>
         : never
 ;
-// Distribution
-type Distribute<T extends Record<
-    keyof T & GroupWithIndex['index'],
+// Transformation
+type CaptureValue<T extends Record<K, {value: unknown}>, K extends keyof T> = Fallback<T[K]['value'], undefined>;
+type Transform<T extends Record<
+    keyof T,
     {
-        value: string,
+        value: unknown,
         reference: GroupWithIndex['value']
     }
 >> = T extends unknown
@@ -366,7 +367,7 @@ type Distribute<T extends Record<
         ]: T[K]
     }, infer CaptureRecord>
         ? {
-            captures: ToTuple<{ [K in keyof CaptureRecord]: Fallback<CaptureRecord[K]['value'], undefined> }>,
+            captures: ToTuple<{ [K in keyof CaptureRecord]: CaptureValue<CaptureRecord, K> }>,
             namedCaptures: {
                 [K in keyof CaptureRecord as unknown extends As<CaptureRecord[K]['reference'], infer Capture>
                     ? Capture extends {
@@ -376,7 +377,7 @@ type Distribute<T extends Record<
                         ? Capture['name']
                         : never
                     : never
-                ]: Fallback<CaptureRecord[K]['value'], undefined>
+                ]: CaptureValue<CaptureRecord, K>
             }
         }
         : never
@@ -392,7 +393,7 @@ export type Parse<T extends string> = string extends T
         namedCaptures: Record<string, string | undefined>;
     }
     // @ts-expect-error: Excessive stack depth
-    : Distribute<ContextualizeToken<IndexToken<{
+    : Transform<ContextualizeToken<IndexToken<{
         type: 'groups',
         groups: [{
             isCaptured: true,

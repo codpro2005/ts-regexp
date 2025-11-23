@@ -1,5 +1,5 @@
 // Utils
-//  Compensation
+//  Constraints
 type As<T, _Infer extends T> = unknown;
 export type Head<T extends unknown[]> = T[0];
 /**
@@ -391,7 +391,7 @@ export type Parse<T extends string> = string extends T
         captures: [string, ...(string | undefined)[]],
         namedCaptures: Record<string, string | undefined>;
     }
-    // @ts-expect-error: this should terminate
+    // @ts-expect-error: Excessive stack depth
     : Distribute<ContextualizeToken<IndexToken<{
         type: 'groups',
         groups: [{
@@ -630,5 +630,4 @@ export const typedRegExp = <
             & (GlobalFalseIndicesBehavior<false> | GlobalFalseIndicesBehavior<true>)
         )
     ) & (IndicesBehavior<false> | IndicesBehavior<true>)>;
-
 };

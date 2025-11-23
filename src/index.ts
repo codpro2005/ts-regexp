@@ -112,46 +112,46 @@ type Exists<T> = T extends never
 ;
 type AsSkippedEscape<
     T extends string,
-    Infer extends T extends `\\${string}${infer Skipped}`
-        ? Skipped
+    Infer extends T extends `\\${string}${infer Remainder}`
+        ? Remainder
         : never
 > = Exists<Infer>;
 type AsSkippedCharacterClass<
     T extends string,
-    Infer extends unknown extends AsSkippedEscape<T, infer Skipped>
-        ? Skipped
+    Infer extends unknown extends AsSkippedEscape<T, infer Remainder>
+        ? Remainder
         : T extends `[${infer Rest}`
             ? ResolveCharacterClass<Rest>
             : never
 > = Exists<Infer>;
 type AsSkippedGroup<
     T extends string,
-    Infer extends unknown extends AsSkippedCharacterClass<T, infer Skipped>
-        ? Skipped
+    Infer extends unknown extends AsSkippedCharacterClass<T, infer Remainder>
+        ? Remainder
         : T extends `(${infer Rest}`
             ? ResolveGroup<Rest>
             : never
 > = Exists<Infer>;
 
 type ResolveCharacterClass<T extends string> = T extends `${infer First}${infer Rest}`
-    ? unknown extends AsSkippedEscape<T, infer Skipped>
-        ? ResolveCharacterClass<Skipped>
+    ? unknown extends AsSkippedEscape<T, infer Remainder>
+        ? ResolveCharacterClass<Remainder>
         : First extends ']'
             ? Rest
             : ResolveCharacterClass<Rest>
     : never
 ;
 type ResolveGroup<T extends string> = T extends `${infer First}${infer Rest}`
-    ? unknown extends AsSkippedGroup<T, infer Skipped>
-        ? ResolveGroup<Skipped>
+    ? unknown extends AsSkippedGroup<T, infer Remainder>
+        ? ResolveGroup<Remainder>
         : First extends ')'
             ? Rest
             : ResolveGroup<Rest>
     : never
 ;
 type ResolveAlternation<T extends string> = T extends `${infer First}${infer Rest}`
-    ? unknown extends AsSkippedGroup<T, infer Skipped>
-        ? ResolveAlternation<Skipped>
+    ? unknown extends AsSkippedGroup<T, infer Remainder>
+        ? ResolveAlternation<Remainder>
         : First extends '|'
             ? Rest
             : ResolveAlternation<Rest>
@@ -190,8 +190,8 @@ type GroupPatterns<T extends string> = T extends `?<${infer Name}>${infer TheRes
         }
 ;
 type GroupsTree<T extends string> = T extends `${string}${infer Rest}`
-    ? unknown extends AsSkippedCharacterClass<T, infer Skipped>
-        ? GroupsTree<Skipped>
+    ? unknown extends AsSkippedCharacterClass<T, infer Remainder>
+        ? GroupsTree<Remainder>
         : unknown extends As<ResolveGroup<Rest>, infer Tail>
             ? T extends `(${infer Content})${Tail}`
                 ? [

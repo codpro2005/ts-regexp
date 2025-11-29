@@ -348,7 +348,7 @@ type ContextualizeGroups<TGroups extends GroupWithIndexes> = unknown extends AsL
 type ContextualizeToken<TToken extends TokenWithIndex> = TToken extends { type: 'alternation' }
     ? (
         (ContextualizeToken<TToken['left']> & UnsetToken<TToken['right']>) |
-        (ContextualizeToken<TToken['right']> & UnsetToken<TToken['left']>)
+        (UnsetToken<TToken['left']> & ContextualizeToken<TToken['right']>)
     )
     : TToken extends { type: 'groups' }
         ? ContextualizeGroups<TToken['groups']>

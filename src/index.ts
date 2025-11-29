@@ -78,12 +78,10 @@ type FirstMatch<T extends string, TSource extends string> = TSource extends `${i
 ;
 type ToNattyNumber<T extends string> = T extends `0${infer Rest extends `${number}`}`
     ? ToNattyNumber<Rest>
-    : T extends `-${string}` | `${string}.${string}`
+    : T extends `-${string}`
         ? never
-        : T extends `${infer N extends number}`
-            ? number extends N // whitespace check
-                ? never
-                : N
+        : T extends `${bigint}` & `${infer N extends number}`
+            ? N
             : never
 ;
 type Override<TOriginal, TNew> = Omit<

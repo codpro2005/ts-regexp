@@ -39,9 +39,12 @@ type Add<T extends number, T2 extends number> = T2 extends 0
     : Increment<Add<T, Decrement<T2>>>
 ;
 //  Rest
-type Prettify<T> = {
-  [K in keyof T]: T[K];
-} & {}; // Thanks Matt!
+type Prettify<T> = T extends (...args: never[]) => unknown
+    ? (...args: Parameters<T>) => ReturnType<T>
+    : {
+        [K in keyof T]: T[K];
+    } & {}
+; // Thanks Matt!
 type ToTupleInternal<TRecord extends Record<number, unknown>, Index extends number> = keyof TRecord extends never
     ? []
     : [

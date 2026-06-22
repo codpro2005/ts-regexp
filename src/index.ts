@@ -1,17 +1,8 @@
 // Utils
 //  Constraints
 type As<T, _Infer extends T> = unknown;
-export type Head<T extends unknown[]> = T[0];
-/**
- * Grab the tail of a list (all elements except the first)
- *
- * @example
- * ```ts
- * // Will omit the 0-th capture, leaving only the capture groups
- * type Captures = Tail<ParseCaptures<MyRegex>>;
- * ```
- */
-export type Tail<T extends unknown[]> = T extends [infer _, ...infer Rest]
+type Head<T extends unknown[]> = T[0];
+type Tail<T extends unknown[]> = T extends [infer _, ...infer Rest]
     ? Rest
     : never
 ;
@@ -410,21 +401,27 @@ export type Parse<T extends string> = string extends T
  *
  * @example
  * ```ts
- * // Will get all non-named captures, including the string itself at index 0
- * type AllCaptures = ParseCaptures<MyRegex>;
- *
- * // Will omit the 0-th capture, leaving only the capture groups
- * type OnlyGroups = Tail<ParseCaptures<MyRegex>>;
+ * type Captures = ParseCaptures<MyRegex>;
  * ```
  */
 export type ParseCaptures<T extends string> = Parse<T>['captures'];
+
+/**
+ * Get the list of indexed groups (captures excluding the full match (0th index)) from a regex-like string literal type
+ * 
+ * @example
+ * ```ts
+ * type Groups = ParseGroups<MyRegex>;
+ * ```
+ */
+export type ParseGroups<T extends string> = Tail<Parse<T>['captures']>;
 
 /**
  * Get the dictionary of named captures from a regex-like string literal type
  *
  * @example
  * ```ts
- * type AllNamedCaptures = ParseNamedCaptures<MyRegex>;
+ * type NamedCaptures = ParseNamedCaptures<MyRegex>;
  * ```
  */
 export type ParseNamedCaptures<T extends string> = Parse<T>['namedCaptures'];

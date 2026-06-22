@@ -506,7 +506,7 @@ export const typedRegExp = <
             ? true
             : false
     ;
-    // mustn't be inline and must be mapped for distributive reasons or smth idk
+    // isn't inline (avoids distribution clutter) and must be mapped for distributive reasons or smth idk
     type OmitTupleNumberKey<TCaptures extends Captures> = {
         [K in keyof TCaptures as K extends number
             ? number extends TCaptures['length']

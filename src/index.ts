@@ -48,7 +48,7 @@ type ToTupleInternal<TRecord extends Record<number, unknown>, Index extends numb
 ;
 type ToTuple<TRecord extends Record<number, unknown>> = ToTupleInternal<TRecord, 0>;
 
-type IsSatisfied<T, TCandidate extends T> = TCandidate;
+type SatisfiedBy<TConstraint, T extends TConstraint> = T;
 type Is<T extends boolean, TIf, TElse> = T extends true
     ? TIf
     : TElse
@@ -217,7 +217,7 @@ type TokenTree<T extends string> = unknown extends As<ResolveAlternation<T>, inf
     : never
 ;
 // Token type
-type Token = IsSatisfied<{ type: string },
+type Token = SatisfiedBy<{ type: string },
 {
     type: 'alternation',
     left: Token,
@@ -228,9 +228,9 @@ type Token = IsSatisfied<{ type: string },
     groups: ({
         isOptional: boolean,
         inner: Token
-    } & IsSatisfied<{ isCaptured: boolean },
+    } & SatisfiedBy<{ isCaptured: boolean },
             { isCaptured: false } |
-            ({ isCaptured: true } & IsSatisfied<{ isNamed: boolean },
+            ({ isCaptured: true } & SatisfiedBy<{ isNamed: boolean },
                 { isNamed: false } |
                 { isNamed: true, name: string }
             >)
@@ -284,7 +284,7 @@ type IndexTokenInternal<TToken extends Token, TIndex extends number> = TToken ex
 ;
 type IndexToken<TToken extends Token> = IndexTokenInternal<TToken, 0>;
 //  TokenWithIndex type
-type TokenWithIndex = IsSatisfied<{type: string},
+type TokenWithIndex = SatisfiedBy<{type: string},
 {
     type: 'alternation',
     left: TokenWithIndex,
@@ -297,9 +297,9 @@ type TokenWithIndex = IsSatisfied<{type: string},
         value: {
             isOptional: boolean,
             inner: TokenWithIndex
-        } & IsSatisfied<{ isCaptured: boolean },
+        } & SatisfiedBy<{ isCaptured: boolean },
             { isCaptured: false } |
-            ({ isCaptured: true } & IsSatisfied<{ isNamed: boolean },
+            ({ isCaptured: true } & SatisfiedBy<{ isNamed: boolean },
                 { isNamed: false } |
                 { isNamed: true, name: string }
             >)

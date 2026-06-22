@@ -572,16 +572,20 @@ export const typedRegExp = <
         {}
     );
     type GlobalMatches = [Head<Captures>, ...Head<Captures>[]];
+    type RegExpSatisfies<T extends keyof T extends keyof typeof regExp
+        ? unknown
+        : never
+    > = T;
     const ret = {
         regExp,
-        ...toPOJO(regExp as Override<typeof regExp, {
+        ...toPOJO(regExp as Override<typeof regExp, RegExpSatisfies<{
             dotAll: HasFlag<'s'>,
             exec: <T extends string>(string: T) => StrictRegExpExecArray<T> | null,
             flags: GetFlags<ResolvedFlags>,
             global: HasFlag<'g'>,
             hasIndices: HasFlag<'d'>,
             ignoreCase: HasFlag<'i'>,
-            multiLine: HasFlag<'m'>,
+            multiline: HasFlag<'m'>,
             source: TPattern extends ''
                 ? '(?:)'
                 : TPattern
@@ -589,7 +593,7 @@ export const typedRegExp = <
             sticky: HasFlag<'y'>,
             unicode: HasFlag<'u'>,
             unicodeSets: HasFlag<'v'>,
-        }>),
+        }>>),
         matchIn: <T extends string>(
             source: T
         ) => source.match(regExp) as (Is<HasFlag<'g'>,

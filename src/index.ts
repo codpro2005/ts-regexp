@@ -30,6 +30,7 @@ type Add<T extends number, T2 extends number> = T2 extends 0
     : Increment<Add<T, Decrement<T2>>>
 ;
 //  Rest
+type Infer<T, _Infer extends T> = T;
 type Prettify<T> = T extends (...args: never[]) => unknown
     ? (...args: Parameters<T>) => ReturnType<T>
     : {
@@ -184,37 +185,33 @@ type GroupPatterns<T extends string> = T extends `?<${infer Name}>${infer TheRes
 type GroupsTree<T extends string> = T extends `${string}${infer Rest}`
     ? unknown extends AsSkippedCharacterClass<T, infer Remainder>
         ? GroupsTree<Remainder>
-        : unknown extends As<ResolveGroup<Rest>, infer Tail>
-            ? T extends `(${infer Content})${Tail}`
-                ? [
-                    GroupPatterns<Content>['value'] & {
-                        isOptional: Tail extends `${'?' | '*'}${string}`
-                            ? true
-                            : Tail extends `{${infer ModRange}}${string}`
-                                ? 0 extends InferMin<ModRange>
-                                    ? true
-                                    : false
-                                : false,
-                        inner: TokenTree<GroupPatterns<Content>['rest']>
-                    },
-                    ...GroupsTree<Tail>
-                ]
-                : GroupsTree<Rest>
-            : never
+        : T extends `(${infer Content})${Infer<ResolveGroup<Rest>, infer Tail>}`
+            ? [
+                GroupPatterns<Content>['value'] & {
+                    isOptional: Tail extends `${'?' | '*'}${string}`
+                        ? true
+                        : Tail extends `{${infer ModRange}}${string}`
+                            ? 0 extends InferMin<ModRange>
+                                ? true
+                                : false
+                            : false,
+                    inner: TokenTree<GroupPatterns<Content>['rest']>
+                },
+                ...GroupsTree<Tail>
+            ]
+            : GroupsTree<Rest>
     : []
 ;
-type TokenTree<T extends string> = unknown extends As<ResolveAlternation<T>, infer Right>
-    ? T extends `${infer Left}|${Right}`
-        ? {
-            type: 'alternation',
-            left: TokenTree<Left>,
-            right: TokenTree<Right>
-        }
-        : {
-            type: 'groups',
-            groups: GroupsTree<T>
-        }
-    : never
+type TokenTree<T extends string> = T extends `${infer Left}|${Infer<ResolveAlternation<T>, infer Right>}`
+    ? {
+        type: 'alternation',
+        left: TokenTree<Left>,
+        right: TokenTree<Right>
+    }
+    : {
+        type: 'groups',
+        groups: GroupsTree<T>
+    }
 ;
 // Token type
 type Token = SatisfiedBy<{ type: string },

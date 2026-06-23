@@ -235,8 +235,8 @@ type Token = SatisfiedBy<{ type: string },
     )[]
 }>;
 type Groups = (Token & {type: 'groups'})['groups'];
-// Indexification (DFS)
-//  Utils
+type Group = Groups[number];
+// DFS Utils
 type FlattenGroups<TGroups extends Groups> = unknown extends AsLinked<TGroups, infer First, infer Rest>
     ? [
         First,
@@ -255,98 +255,49 @@ type FlattenTokenInternal<TToken extends Token, Limit extends unknown[]> = Limit
     : never
 ;
 type FlattenToken<TToken extends Token> = FlattenTokenInternal<TToken, Range<20>>;
-//  DFS
-type IndexGroups<TGroups extends Groups, TIndex extends number> = unknown extends AsLinked<TGroups, infer First, infer Rest>
-    ? [
-        {
-            index: TIndex,
-            value: Omit<First, 'inner'> & { inner: IndexTokenInternal<First['inner'], Increment<TIndex>> }
-        },
-        ...IndexGroups<Rest, Add<TIndex, FlattenGroups<[First]>['length'] & number>>
-    ]
-    : []
-;
-type IndexTokenInternal<TToken extends Token, TIndex extends number> = TToken extends { type: 'alternation' } ? {
-    type: 'alternation',
-    left: IndexTokenInternal<TToken['left'], TIndex>,
-    right: IndexTokenInternal<TToken['right'], Add<
-        TIndex,
-        FlattenToken<TToken['left']>['length']
-            & number
-    >>
-} : TToken extends { type: 'groups' } ? {
-        type: 'groups',
-        groups: IndexGroups<TToken['groups'], TIndex>
-    } : never
-;
-type IndexToken<TToken extends Token> = IndexTokenInternal<TToken, 0>;
-//  TokenWithIndex type
-type TokenWithIndex = SatisfiedBy<{type: string},
-{
-    type: 'alternation',
-    left: TokenWithIndex,
-    right: TokenWithIndex
-} |
-{
-    type: 'groups',
-    groups: {
-        index: number,
-        value: {
-            isOptional: boolean,
-            inner: TokenWithIndex
-        } & SatisfiedBy<{ isCaptured: boolean },
-            { isCaptured: false } |
-            ({ isCaptured: true } & SatisfiedBy<{ isNamed: boolean },
-                { isNamed: false } |
-                { isNamed: true, name: string }
-            >)
-        >
-    }[]
-}>;
-type GroupWithIndexes = (TokenWithIndex & {type: 'groups'})['groups'];
-type GroupWithIndex = GroupWithIndexes[number];
 // Contextualization
-type ContextualValue<T extends GroupWithIndex, TValue> = Record<T['index'], {
+type ContextualValue<T extends Group, TIndex extends number, TValue> = Record<TIndex, {
     value: TValue,
-    reference: T['value']
+    reference: T
 }>;
-type UnsetGroups<TGroups extends GroupWithIndexes> = unknown extends AsLinked<TGroups, infer First, infer Rest>
-    ? ContextualValue<First, never>
-        & UnsetToken<First['value']['inner']>
-        & UnsetGroups<Rest>
+type UnsetGroups<TGroups extends Groups, TIndex extends number> = unknown extends AsLinked<TGroups, infer First, infer Rest>
+    ? ContextualValue<First, TIndex, never>
+        & UnsetToken<First['inner'], Increment<TIndex>>
+        & UnsetGroups<Rest, Add<TIndex, FlattenGroups<[First]>['length'] & number>>
     : {}
 ;
-type UnsetToken<TToken extends TokenWithIndex> = TToken extends { type: 'alternation' }
-    ? UnsetToken<TToken['left']> & UnsetToken<TToken['right']>
+type UnsetToken<TToken extends Token, TIndex extends number> = TToken extends { type: 'alternation' }
+    ? UnsetToken<TToken['left'], TIndex> & UnsetToken<TToken['right'], Add<TIndex, FlattenToken<TToken['left']>['length']>>
     : TToken extends { type: 'groups' }
-        ? UnsetGroups<TToken['groups']>
+        ? UnsetGroups<TToken['groups'], TIndex>
         : never
 ;
-type ContextualizeGroups<TGroups extends GroupWithIndexes> = unknown extends AsLinked<TGroups, infer First, infer Rest>
+type ContextualizeGroups<TGroups extends Groups, TIndex extends number> = unknown extends AsLinked<TGroups, infer First, infer Rest>
     ? (
-        (First['value']['isOptional'] extends true
-            ? UnsetGroups<[First]>
+        (First['isOptional'] extends true
+            ? UnsetGroups<[First], TIndex>
             : never
-        ) | (ContextualValue<First, string> & ContextualizeToken<First['value']['inner']>)
-    ) & ContextualizeGroups<Rest>
+        ) | (ContextualValue<First, TIndex, string> & ContextualizeTokenInternal<First['inner'], Increment<TIndex>>)
+    ) & ContextualizeGroups<Rest, Add<TIndex, FlattenGroups<[First]>['length'] & number>>
     : {}
 ;
-type ContextualizeToken<TToken extends TokenWithIndex> = TToken extends { type: 'alternation' }
+type ContextualizeTokenInternal<TToken extends Token, TIndex extends number> = TToken extends { type: 'alternation' }
     ? (
-        (ContextualizeToken<TToken['left']> & UnsetToken<TToken['right']>) |
-        (UnsetToken<TToken['left']> & ContextualizeToken<TToken['right']>)
+        (ContextualizeTokenInternal<TToken['left'], TIndex> & UnsetToken<TToken['right'], Add<TIndex, FlattenToken<TToken['left']>['length']>>) |
+        (UnsetToken<TToken['left'], TIndex> & ContextualizeTokenInternal<TToken['right'], Add<TIndex, FlattenToken<TToken['left']>['length']>>)
     )
     : TToken extends { type: 'groups' }
-        ? ContextualizeGroups<TToken['groups']>
+        ? ContextualizeGroups<TToken['groups'], TIndex>
         : never
 ;
+type ContextualizeToken<TToken extends Token> = ContextualizeTokenInternal<TToken, 0>;
 // Transformation
 type CaptureValue<T extends Record<K, {value: unknown}>, K extends keyof T> = Fallback<T[K]['value'], undefined>;
 type Transform<T extends Record<
     keyof T,
     {
         value: unknown,
-        reference: GroupWithIndex['value']
+        reference: Group
     }
 >> = T extends unknown
     ? unknown extends As<{

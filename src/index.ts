@@ -7,7 +7,7 @@ type As<T, _Infer extends T> = unknown;
  * @example
  * ⁠ ts
  * type Res = Head<[1, 2, 3]>;
- * // type Res = 1
+ * //   ^? type Res = 1
  *  ⁠
  * @deprecated This type will be removed in the next release.
  * If you relied on it, either copy its definition
@@ -21,7 +21,7 @@ export type Head<T extends unknown[]> = T[0];
  * @example
  * ⁠ ts
  * type Res = Tail<[1, 2, 3]>;
- * // type Res = [2, 3]
+ * //   ^? type Res = [2, 3]
  *  ⁠
  * @deprecated This type will be removed in the next release.
  * If you relied on it, either copy its definition
@@ -394,7 +394,7 @@ export type Parse<T extends string> = string extends T
  * @example
  * ```ts
  * type Result = ParseCaptures<'(?<a>0)|(?<b>1)'>;
- * // type Result = [string, string, undefined] | [string, undefined, string]
+ * //   ^? type Result = [string, string, undefined] | [string, undefined, string]
  * ```
  */
 export type ParseCaptures<T extends string> = Parse<T>['captures'];
@@ -405,7 +405,7 @@ export type ParseCaptures<T extends string> = Parse<T>['captures'];
  * @example
  * ```ts
  * type Result = ParseSubcaptures<'(?<a>0)|(?<b>1)'>;
- * // type Result = [string, undefined] | [undefined, string]
+ * //   ^? type Result = [string, undefined] | [undefined, string]
  * ```
  */
 export type ParseSubcaptures<T extends string> = Tail<Parse<T>['captures']>;
@@ -416,7 +416,7 @@ export type ParseSubcaptures<T extends string> = Tail<Parse<T>['captures']>;
  * @example
  * ```ts
  * type Result = ParseNamedCaptures<'(?<a>0)|(?<b>1)'>;
- * // type Result = {
+ * //   ^? type Result = {
  * //     a: string;
  * //     b: undefined;
  * // } | {

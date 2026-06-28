@@ -11,10 +11,10 @@ A RegExp wrapper providing stronger type safety.
 ```ts
 const groups1 = new RegExp('^(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})$', 'g').exec('9999-12-31')!.groups;
 //      ⤴ '{ [key: string]: string; } | undefined' 🤮
-const groups2 = typedRegExp('^(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})$', 'g').exec('9999-12-31')!.groups;
+const groups2 = regex('^(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})$', 'g').exec('9999-12-31')!.groups;
 //      ⤴ '{ year: string, month: string, day: string }' 🥰
 ```
-[👉 Try it in the TypeScript Playground](https://www.typescriptlang.org/play/?#code/JYWwDg9gTgLgBAbzjAnmApgEwEroOYCiAHmHAL5wBmUEIcA5DAM4C0U+6J9A3AFC8B6AXABCAQybAAxnACuTMXnS8pEAHZN4qDJgAiYmOgAKBw1DVwAvMjRZchEgAp6APUcB+ADwp0YqAD4AHUDMBAAWMgBKFg9PEHUYAAsgkIQAJiiYr0wxFBTQjMiAEnoAGgY8eki+VQ14TnQpXCYrGx19QxMYMzUAOgapZzSABlGWAEZhljSwqoBCXrwaWTAmPiE4TbgXdxV1TTh2MAAbMSl0ZtbtLA7jU3RzXqPT84BJNSHRqcnp2fLHEAGKSJco+PzleJqJLlHIocoQSiUJjoGDlTRQYBqPDlJYQFZMSJWfxwAAGRQQuPxvVhZF65Mpq16kKStPpy0ZYKgZBJkTm62EW0FQuFItFYvFEslUolO34GwAwglODBZGJjnAxAB3PzoNToJhMQQCuC4GBiTEtVRQdhSeAQMAwYDqNXAVBwABGEiwcHUcCYqgwezqcAZLWs1xw+GIYGcbi8AEdVVDXXlgpgANSxWRqV3+ADaYhYAC8ALrpyKRdwlSJMoGJd6fYZgIjzRbsta8UO9bOu-lC2XAShwRxdxNiZOoQkIXiCrs9mDcOAbV5DscTlBwYAtPDAABuuvKYjkOfgIHk8Hd6DgYBou+AmG9EjgmvQx2OvRnWw2gtlZDlxoAQWOJgIGfaAAGsWk1V1Eg1Y4egMJ01CDA5QzSK5bEjBwY1cWJDCIGB80LUtywAH1iNdHVQfJMy8eciOLMsK2rWsYGBBt6BGJsW15Ns8VWPg0O7E8jWFAchxHds0l6fD4EseTjwfShMSwKdP02IT50XZch0xMBZHgLc1EYDVkGVcpXTgM8DkBNjYMolNn0SaRYMxKRjlkB8WiPecP0Fb8f12P9RIAZTESh8FVKBMENAKCH9MQwExPA4AAMjgeVEj8M4zHlU4DTgLK1EwY5kt4CN7GjZxgliNQxBALAUkiKpWPYj56E8OqGswfxmt40M+2lIbhq2WUKqjJx6FiZSoE0fJImCcivGRWoeoLRi+ta+t2rCUixFbAbRJG46TpFMbMMqya82m4BZsIhbAhLWIVvUHrIhLVtbLa5x-AO9tBtOwHJVlI64CMGgMFgDdOC3Qw1HOUSAAFmBYTgMFtVHrWgAAuBgvsSIDjneeg4HTBhnjOdBCeJuBMHUEyYYOSR4avNRQPoSoqFOPBeDzcbsOcMB7nMFr8eptRyn5qr6CF7oHmMmsKfOcWSz4KXJtlnoygqUW63FvgkZRtHGhgTGaCgXH6ExTBpH1Em6f1Yz6iIWG-Tc1n2cwEnKG58qLomnDNfllqBmcVtrdtjt1cD4XjPKegvZrUP6HD4rI4NgKADFubgXcXRt1BDdYY2MYec3caOXxDEwLnFD9nRLpjuWRfjndKmqIvUZIE2zZxhhZBJ8ca-oXdve5y1xzZi8r1UEB3RUzB67sAPBdj7WOdkUeO9EgDMALpC1TgUqzEPzFKGgWykJQ536pOO5m4scN-YF+gQBQLotdb+8qj4Thb+Oe+PReggVkFAc4ANxSyj-uAABH95a9B9ooDsAVIG7Dii7TQupzg+iHIgvAhpoF3zgY8LKTB3g23OB2QhsDY7AMdFIcCKAAa9BYUAA)
+[👉 Try it in the TypeScript Playground](https://www.typescriptlang.org/play/?#code/JYWwDg9gTgLgBAbzlApgcxQDzgXzgMyghDgHIYBnAWlQ0zFIG4AoZgejbgCEBDC4AMZwArhR4ZmAiADsK8GAE8wKACYARHjBQAFTVqjS4AXmTosAClIA9cwH4APApQ8oAPgA67lQgAsOAJRUdvYgMjAAFh5eCABMAUEOKjwKUd5x-gAkpAA0ZGik-ixSsvBYKAIASigUxnCKyuqaOnooBgB0ZQKWMQAMfVQAjD1UMT4FAIRtaETCYBQsHHBLcFa2kjJypmAANjwCKFU1JvWqGlq6MPrSbag7eygAktLdfcNDI2O55iCaAuG5ThcuVC0giuSSClyEHw+AoKBguTkUGA0jQuWmEFmFH8xlccAABhkEBisW0ITg2kSSXM2iCIhSqTMaYCoDh8f5xgtOMseby+fyBYKhcKRaLhatWIsAMJhLAwYQ8bZwHgAdxcKGk1Qo7G5cCqMB4KJqUigqAE8AgYBgwBkiuAijgACM+Ko4DI4BQpMp1iU4NSjqY6JYbA4AI4K0H2lKeFQAamCwmk9tcAG0eFQAF4AXVj-n8tiy-lpv3CTxePTAmAmUyZ82Y-raiftXN5EuA+Dg5gb4Z4kcUOIQzB5DabMEYcEWDw7Pb7CjgwBqaGAADcNbkeCIk-AQKJ4I6UHAwERl8AVK6+HAVShtts2kPloseRKcJLdQBBbYUCCX6AAaxqKr2uEyrbFcmg2tIPqbP6MS1LQFjWMEWiYDAqbptmuYAD7BDO1qKKk8YOKOaGZjmeaFsWMB-GWpC9BWVYcjWmJzCwMGNluOp8m2HZdrWMRtMh8BGMJm5nvgKKqAO95LGxo7jpOHYomAwjwAu0jkMqdRyrk9pwDumw-FRwG4VGl7hIIwEogI2zCGeNQbqOd48o+T5rC+nEAMo8Pg6AKlAKjai5ACino8GAKJoHAABkcBSuELh7PoUq7BQNTxdIKjbBFzDwZglieME0g8CAqhRP4BSUdRzykPYRUlSorjlYx-otmKbXtcsEq5ZYwTiVAcipP4njYQ4cLFA1aakU1lWltVPiYTw1YtZxHWrWt-JdWYeWkCmvXAP1qFDe4WbBGNMgNf4WbVoZVWWK4S21q163PSKEorXA2hEMosBzlgC5aNI+ycQAApQVBYMo5rg6a0AAFxkDd4QftsTykHAsZkLcuz7MjqNwCoMgaX9mz8IDB7SN+pD5AQuxoMwKbdaQYAtAYFWI7j0i5IzzOXK06lFlj9wc1mLDcyz6m5FTbMlhzLAg2DEPlDA0NEFA8OkCiKiCNUaME9U6mlJg-0elZ5OUyoaP4LTOVbZYPNXBVnSWNWmva3WYu86zksW0WTukC7GVu3LLkAGK03Ay52lrijy9QitQ60qvw7czhaCoNPiDbQZM+LOR5MA+SFLH4P0ErKtw2Qwho726ekMulu08avYU3uB5SCAjoSSoWcIfbfN51Twj10XnFvio0cQYqcBZfoU8ovg0CGRBUGG8VOzNJ7hgmIzIAKBcDuS0uPssFga-bBvVxtF+whQPsT1ChKp-gOf+9820VviHWLkP2swVG3IGp9hug7B-NA2on7r1fu0eKFAnha32HWCBL9xZX2tAIX8CgnptGwUAA)
 ## 🚀 Setup
 1. Install `ts-regexp`
 ```shell
@@ -27,35 +27,35 @@ yarn add ts-regexp
 # Using pnpm
 pnpm add ts-regexp
 ```
-2. Import `typedRegExp`:
+2. Import `regex`:
 ```ts
-import { typedRegExp } from 'ts-regexp';
+import { regex } from 'ts-regexp';
 ```
 ## 🧩 Usage
 
 ### Runtime wrapper
 
-Import and use `typedRegExp` just like the native `RegExp` constructor:
+Import and use `regex` just like the native `RegExp` constructor:
 
 ```typescript
-import { typedRegExp } from 'ts-regexp';
+import { regex } from 'ts-regexp';
 
-const datePattern = typedRegExp('(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})');
-const emailPattern = typedRegExp('^(?<local>[a-z0-9._%+-]+)@(?<domain>[a-z0-9.-]+\.[a-z]{2,})$', 'i');
+const datePattern = regex('(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})');
+const emailPattern = regex('^(?<local>[a-z0-9._%+-]+)@(?<domain>[a-z0-9.-]+\.[a-z]{2,})$', 'i');
 ```
 
 The function signature is:
 ```typescript
-typedRegExp(pattern: string, flags?: string)
+regex(pattern: string, flags?: string)
 ```
-> Note: `typedRegExp` returns a plain object, **not** a `RegExp` instance.
+> Note: `regex` returns a plain object, **not** a `RegExp` instance.
 
 #### Standard RegExp Methods
 
 All standard `RegExp` methods work exactly as expected, but with equivalent or improved typing:
 
 ```typescript
-const pattern = typedRegExp('(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})', 'gid');
+const pattern = regex('(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})', 'gid');
 
 // Standard methods
 pattern.exec('1970-01-01')!.groups;  // { year: string; month: string; day: string; }
@@ -74,7 +74,7 @@ pattern.sticky;  // false
 Each `RegExp`-related `string.prototype` method is available as `${MethodName}In` with equivalent or improved typing:
 
 ```typescript
-const pattern = typedRegExp('(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})');
+const pattern = regex('(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})');
 const string = '1976-11-21';
 
 // Instead of: string.match(pattern)
@@ -94,7 +94,7 @@ pattern.splitIn(string);     // like string.split(pattern)
 When using the global (`g`) flag, additional methods become available:
 
 ```typescript
-const pattern = typedRegExp('\\d', 'g');
+const pattern = regex('\\d', 'g');
 
 // Only available with 'g' flag
 pattern.matchAllIn('1973-12-08');     // like string.matchAll(pattern)
@@ -106,7 +106,7 @@ pattern.replaceAllIn('123-456', '#'); // like string.replaceAll(pattern, replace
 If you need access to the underlying `RegExp` instance:
 
 ```typescript
-const pattern = typedRegExp('\\d+');
+const pattern = regex('\\d+');
 const nativeRegExp = pattern.regExp; // Regular RegExp instance
 ```
 

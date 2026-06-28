@@ -430,7 +430,7 @@ const strIncludes = <TResult extends string, TSearch extends string>(result: TRe
         ? true
         : false
 ;
-export const typedRegExp = <
+export const regex = <
     TPattern extends string,
     TFlags extends string = never
 >(
@@ -582,3 +582,7 @@ export const typedRegExp = <
         )
     ) & (IndicesBehavior<false> | IndicesBehavior<true>)>;
 };
+/**
+ * @deprecated renamed to `regex`. Will be removed on next release.
+ */
+export const typedRegExp = regex;

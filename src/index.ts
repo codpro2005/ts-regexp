@@ -333,7 +333,7 @@ export type Parse<T extends string> = string extends T
         namedCaptures: Record<string, string | undefined>;
     }
     // @ts-expect-error: Excessive stack depth
-    : Transform<ContextualizeToken<IndexToken<{
+    : Transform<ContextualizeToken<{
         type: 'groups',
         groups: [{
             isCaptured: true,
@@ -341,7 +341,7 @@ export type Parse<T extends string> = string extends T
             isOptional: false,
             inner: TokenTree<T>
         }]
-    }>>>
+    }>>
 ;
 
 /**

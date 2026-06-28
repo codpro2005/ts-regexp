@@ -325,7 +325,25 @@ type Transform<T extends Record<
 ;
 
 /**
- * Parse the capture groups from a regex-like string literal type
+ * Parse the capture groups from a regex-like string literal type.
+ * 
+ * @example
+ * ```ts
+ * type Result = Parse<'(?<a>0)|(?<b>1)'>;
+ * // type Result = {
+ * //     captures: [string, string, undefined];
+ * //     namedCaptures: {
+ * //         a: string;
+ * //         b: undefined;
+ * //     };
+ * // } | {
+ * //     captures: [string, undefined, string];
+ * //     namedCaptures: {
+ * //         a: undefined;
+ * //         b: string;
+ * //     };
+ * // }
+ * ```
  */
 export type Parse<T extends string> = string extends T
     ? {
@@ -345,31 +363,40 @@ export type Parse<T extends string> = string extends T
 ;
 
 /**
- * Get the list of indexed captures from a regex-like string literal type
+ * Get the list of indexed capture groups from a regex-like string literal type. This includes the full match at index 0.
  *
  * @example
  * ```ts
- * type Captures = ParseCaptures<MyRegex>;
+ * type Result = ParseCaptures<'(?<a>0)|(?<b>1)'>;
+ * // type Result = [string, string, undefined] | [string, undefined, string]
  * ```
  */
 export type ParseCaptures<T extends string> = Parse<T>['captures'];
 
 /**
- * Get the list of indexed groups (captures excluding the full match (0th index)) from a regex-like string literal type
+ * Get the list of indexed capture subgroups from a regex-like string literal type. This excludes the full match at index 0.
  * 
  * @example
  * ```ts
- * type Groups = ParseGroups<MyRegex>;
+ * type Result = ParseSubcaptures<'(?<a>0)|(?<b>1)'>;
+ * // type Result = [string, undefined] | [undefined, string]
  * ```
  */
-export type ParseGroups<T extends string> = Tail<Parse<T>['captures']>;
+export type ParseSubcaptures<T extends string> = Tail<Parse<T>['captures']>;
 
 /**
- * Get the dictionary of named captures from a regex-like string literal type
+ * Get the record of named capture groups from a regex-like string literal type.
  *
  * @example
  * ```ts
- * type NamedCaptures = ParseNamedCaptures<MyRegex>;
+ * type Result = ParseNamedCaptures<'(?<a>0)|(?<b>1)'>;
+ * // type Result = {
+ * //     a: string;
+ * //     b: undefined;
+ * // } | {
+ * //     a: undefined;
+ * //     b: string;
+ * // }
  * ```
  */
 export type ParseNamedCaptures<T extends string> = Parse<T>['namedCaptures'];

@@ -146,6 +146,16 @@ type Result = [string, string, undefined] | [string, undefined, string]
 */
 ```
 
+### `ParseSubcaptures<T extends string>`
+
+Extracts only the positional capture groups as a tuple, excluding the full match at 0th index.
+```ts
+type Result = ParseSubcaptures<'(?<a>0)|(?<b>1)'>;
+/*
+type Result = [string, undefined] | [undefined, string]
+*/
+```
+
 ### `ParseNamedCaptures<T extends string>`
 
 Extracts only the named capture groups as an object type.

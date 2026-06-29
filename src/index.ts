@@ -1,34 +1,8 @@
 // Utils
 //  Constraints
 type As<T, _Infer extends T> = unknown;
-/**
- * Grab the head of a list (first element)
- *
- * @example
- * ```ts
- * type Res = Head<[1, 2, 3]>;
- * //   ^? type Res = 1
- * ```
- * @deprecated This type will be removed in the next release.
- * If you relied on it, either copy its definition
- * or use an external utility types library definition like
- * [ts-essentials/lib/head](https://github.com/ts-essentials/ts-essentials/tree/5abe8700b42068048bd3c368e0531b6defe56558/lib/head)
- */
-export type Head<T extends unknown[]> = T[0];
-/**
- * Grab the tail of a list (all elements except the first)
- *
- * @example
- * ```ts
- * type Res = Tail<[1, 2, 3]>;
- * //   ^? type Res = [2, 3]
- * ```
- * @deprecated This type will be removed in the next release.
- * If you relied on it, either copy its definition
- * or use an external utility types library definition like
- * [ts-essentials/lib/tail](https://github.com/ts-essentials/ts-essentials/tree/5abe8700b42068048bd3c368e0531b6defe56558/lib/tail)
- */
-export type Tail<T extends unknown[]> = T extends [infer _, ...infer Rest]
+type Head<T extends unknown[]> = T[0];
+type Tail<T extends unknown[]> = T extends [infer _, ...infer Rest]
     ? Rest
     : never
 ;

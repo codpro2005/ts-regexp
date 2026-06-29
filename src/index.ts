@@ -5,10 +5,10 @@ type As<T, _Infer extends T> = unknown;
  * Grab the head of a list (first element)
  *
  * @example
- * ⁠ ts
+ * ```ts
  * type Res = Head<[1, 2, 3]>;
  * //   ^? type Res = 1
- *  ⁠
+ * ```
  * @deprecated This type will be removed in the next release.
  * If you relied on it, either copy its definition
  * or use an external utility types library definition like
@@ -19,10 +19,10 @@ export type Head<T extends unknown[]> = T[0];
  * Grab the tail of a list (all elements except the first)
  *
  * @example
- * ⁠ ts
+ * ```ts
  * type Res = Tail<[1, 2, 3]>;
  * //   ^? type Res = [2, 3]
- *  ⁠
+ * ```
  * @deprecated This type will be removed in the next release.
  * If you relied on it, either copy its definition
  * or use an external utility types library definition like

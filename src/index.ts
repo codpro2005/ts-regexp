@@ -21,14 +21,6 @@ type RangeInternal<T extends number, TArr extends number[]> = TArr['length'] ext
 ;
 type Range<T extends number> = RangeInternal<T, []>;
 type Increment<T extends number> = [...Range<T>, unknown]['length'] & number;
-type Decrement<T extends number> = Range<T> extends [unknown, ...infer Rest]
-    ? Rest['length']
-    : never
-;
-type Add<T extends number, T2 extends number> = T2 extends 0
-    ? T
-    : Increment<Add<T, Decrement<T2>>>
-;
 //  Rest
 type Infer<T, _Infer extends T> = T;
 type Prettify<T> = T extends (...args: never[]) => unknown
@@ -236,89 +228,61 @@ type Token = SatisfiedBy<{ type: string },
 }>;
 type Groups = (Token & {type: 'groups'})['groups'];
 type Group = Groups[number];
-// DFS Utils
-type FlattenGroups<TGroups extends Groups> = unknown extends AsLinked<TGroups, infer First, infer Rest>
-    ? [
-        First,
-        ...FlattenToken<First['inner']>,
-        ...FlattenGroups<Rest>
-    ]
-    : []
-;
-type FlattenTokenInternal<TToken extends Token, Limit extends unknown[]> = Limit extends [unknown, ...infer L]
-    ? TToken extends { type: 'alternation' } ? [
-        ...FlattenTokenInternal<TToken['left'], L>,
-        ...FlattenTokenInternal<TToken['right'], L>
-    ] : TToken extends { type: 'groups' }
-        ? FlattenGroups<TToken['groups']>
-        : never
-    : never
-;
-type FlattenToken<TToken extends Token> = FlattenTokenInternal<TToken, Range<20>>;
 // Contextualization
-type ContextualValue<T extends Group, TIndex extends number, TValue> = Record<TIndex, {
+type ContextualValue<T extends Group, TValue> = {
     value: TValue,
     reference: T
-}>;
-type UnsetGroups<TGroups extends Groups, TIndex extends number> = unknown extends AsLinked<TGroups, infer First, infer Rest>
-    ? ContextualValue<First, TIndex, never>
-        & UnsetToken<First['inner'], Increment<TIndex>>
-        & UnsetGroups<Rest, Add<TIndex, FlattenGroups<[First]>['length'] & number>>
-    : {}
+};
+type UnsetGroups<TGroups extends Groups> = unknown extends AsLinked<TGroups, infer First, infer Rest>
+    ? [ContextualValue<First, never>, ...UnsetToken<First['inner']>, ...UnsetGroups<Rest>]
+    : []
 ;
-type UnsetToken<TToken extends Token, TIndex extends number> = TToken extends { type: 'alternation' }
-    ? UnsetToken<TToken['left'], TIndex> & UnsetToken<TToken['right'], Add<TIndex, FlattenToken<TToken['left']>['length']>>
+type UnsetToken<TToken extends Token> = TToken extends { type: 'alternation' }
+    ? [...UnsetToken<TToken['left']>, ...UnsetToken<TToken['right']>]
     : TToken extends { type: 'groups' }
-        ? UnsetGroups<TToken['groups'], TIndex>
+        ? UnsetGroups<TToken['groups']>
         : never
 ;
-type ContextualizeGroups<TGroups extends Groups, TIndex extends number> = unknown extends AsLinked<TGroups, infer First, infer Rest>
-    ? (
+type ContextualizeGroups<TGroups extends Groups> = unknown extends AsLinked<TGroups, infer First, infer Rest>
+    ? [...(
         (First['isOptional'] extends true
-            ? UnsetGroups<[First], TIndex>
+            ? UnsetGroups<[First]>
             : never
-        ) | (ContextualValue<First, TIndex, string> & ContextualizeTokenInternal<First['inner'], Increment<TIndex>>)
-    ) & ContextualizeGroups<Rest, Add<TIndex, FlattenGroups<[First]>['length'] & number>>
-    : {}
+        ) | [ContextualValue<First, string>, ...ContextualizeToken<First['inner']>]
+    ), ...ContextualizeGroups<Rest>]
+    : []
 ;
-type ContextualizeTokenInternal<TToken extends Token, TIndex extends number> = TToken extends { type: 'alternation' }
+type ContextualizeToken<TToken extends Token> = TToken extends { type: 'alternation' }
     ? (
-        (ContextualizeTokenInternal<TToken['left'], TIndex> & UnsetToken<TToken['right'], Add<TIndex, FlattenToken<TToken['left']>['length']>>) |
-        (UnsetToken<TToken['left'], TIndex> & ContextualizeTokenInternal<TToken['right'], Add<TIndex, FlattenToken<TToken['left']>['length']>>)
+        [...ContextualizeToken<TToken['left']>, ...UnsetToken<TToken['right']>] |
+        [...UnsetToken<TToken['left']>, ...ContextualizeToken<TToken['right']>]
     )
     : TToken extends { type: 'groups' }
-        ? ContextualizeGroups<TToken['groups'], TIndex>
+        ? ContextualizeGroups<TToken['groups']>
         : never
 ;
-type ContextualizeToken<TToken extends Token> = ContextualizeTokenInternal<TToken, 0>;
-// Transformation
-type CaptureValue<T extends Record<K, {value: unknown}>, K extends keyof T> = Fallback<T[K]['value'], undefined>;
-type Transform<T extends Record<
-    keyof T,
-    {
-        value: unknown,
-        reference: Group
-    }
->> = T extends unknown
-    ? unknown extends As<{
-        [K in keyof T as T[K]['reference']['isCaptured'] extends false
-            ? never
-            : K
-        ]: T[K]
-    }, infer CaptureRecord>
+type Transform<T extends {value: unknown, reference: Group}[]> = T extends unknown
+    ? unknown extends As<
+        {[I in keyof T & `${number}` as T[I]['reference']['isCaptured'] extends false ? never : I]: T[I]},
+        infer Captures
+    >
         ? {
-            captures: ToTuple<{ [K in keyof CaptureRecord]: CaptureValue<CaptureRecord, K> }>,
+            captures: ToTuple<{[I in keyof Captures & `${number}` as Numeric<I>]: Fallback<Captures[I]['value'], undefined>}>,
             namedCaptures: {
-                [K in keyof CaptureRecord as unknown extends As<CaptureRecord[K]['reference'], infer Capture>
+                [I in keyof Captures & `${number}`]: unknown extends As<Captures[I]['reference'], infer Capture>
                     ? Capture extends {
                         isCaptured: true,
                         isNamed: true
                     }
-                        ? Capture['name']
+                        ? {
+                            key: Capture['name'],
+                            value: Captures[I]['value']
+                        }
                         : never
                     : never
-                ]: CaptureValue<CaptureRecord, K>
-            }
+            } extends infer NamedCaptures extends Record<string, {key: string, value: unknown}>
+                ? {[I in keyof NamedCaptures as NamedCaptures[I]['key']]: Fallback<NamedCaptures[I]['value'], undefined>}
+                : never
         }
         : never
     : never
@@ -350,7 +314,6 @@ export type Parse<T extends string> = string extends T
         captures: [string, ...(string | undefined)[]],
         namedCaptures: Record<string, string | undefined>;
     }
-    // @ts-expect-error: Excessive stack depth
     : Transform<ContextualizeToken<{
         type: 'groups',
         groups: [{

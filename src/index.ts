@@ -211,12 +211,13 @@ type Token = SatisfiedBy<{ type: string },
 type Groups = (Token & {type: 'groups'})['groups'];
 type Group = Groups[number];
 // Contextualization
-type ContextualValue<T extends Group, TValue> = {
-    value: TValue,
-    reference: T
+type ContextualValue = {
+    reference: Group,
+    value: unknown
 };
+type SatisfiesContextualValue<T extends ContextualValue> = T;
 type UnsetGroups<TGroups extends Groups> = unknown extends AsLinked<TGroups, infer First, infer Rest>
-    ? [ContextualValue<First, never>, ...UnsetToken<First['inner']>, ...UnsetGroups<Rest>]
+    ? [SatisfiesContextualValue<{ reference: First, value: never }>, ...UnsetToken<First['inner']>, ...UnsetGroups<Rest>]
     : []
 ;
 type UnsetToken<TToken extends Token> = TToken extends { type: 'alternation' }
@@ -230,7 +231,7 @@ type ContextualizeGroups<TGroups extends Groups> = unknown extends AsLinked<TGro
         (First['isOptional'] extends true
             ? UnsetGroups<[First]>
             : never
-        ) | [ContextualValue<First, string>, ...ContextualizeToken<First['inner']>]
+        ) | [SatisfiesContextualValue<{ reference: First, value: string }>, ...ContextualizeToken<First['inner']>]
     ), ...ContextualizeGroups<Rest>]
     : []
 ;
@@ -243,7 +244,8 @@ type ContextualizeToken<TToken extends Token> = TToken extends { type: 'alternat
         ? ContextualizeGroups<TToken['groups']>
         : never
 ;
-type FilterCaptures<T extends {value: unknown, reference: Group}[]> = unknown extends AsLinked<T, infer Head, infer Tail>
+type ContextualValues = ContextualValue[];
+type FilterCaptures<T extends ContextualValues> = unknown extends AsLinked<T, infer Head, infer Tail>
     ? [
         ...(Head['reference']['isCaptured'] extends false
             ? []
@@ -253,21 +255,25 @@ type FilterCaptures<T extends {value: unknown, reference: Group}[]> = unknown ex
     ]
     : []
 ;
-type MapCaptures<T extends {value: unknown, reference: Group}[]> = unknown extends AsLinked<T, infer Head, infer Tail>
+type MapCaptures<T extends ContextualValues> = unknown extends AsLinked<T, infer Head, infer Tail>
     ? [Fallback<Head['value'], undefined>, ...MapCaptures<Tail>]
     : []
 ;
-type MapNamedCaptures<T extends {value: unknown, reference: Group}[]> = unknown extends AsLinked<T, infer Head, infer Tail>
+type SatisfiesBridge<T extends {
+    key: string,
+    value: unknown
+}> = T;
+type MapNamedCaptures<T extends ContextualValues> = unknown extends AsLinked<T, infer Head, infer Tail>
     ? [
         ...(unknown extends As<Head['reference'], infer Capture>
             ? Capture extends {
                 isCaptured: true,
                 isNamed: true
             }
-                ? [{
+                ? [SatisfiesBridge<{
                     key: Capture['name'],
                     value: Head['value']
-                }]
+                }>]
                 : []
             : []
         ),
@@ -275,11 +281,11 @@ type MapNamedCaptures<T extends {value: unknown, reference: Group}[]> = unknown 
     ]
     : []
 ;
-type Transform<T extends {value: unknown, reference: Group}[]> = T extends unknown
-    ? FilterCaptures<T> extends infer Captures extends {value: unknown, reference: Group}[]
+type Transform<T extends ContextualValues> = T extends unknown
+    ? FilterCaptures<T> extends infer Captures extends ContextualValues
         ? {
             captures: MapCaptures<Captures>,
-            namedCaptures: MapNamedCaptures<Captures> extends infer NamedCaptures extends {key: string, value: unknown}[]
+            namedCaptures: MapNamedCaptures<Captures> extends infer NamedCaptures extends SatisfiesBridge<{key: string, value: unknown}>[]
                 ? {[NamedCapture in NamedCaptures[number] as NamedCapture['key']]: Fallback<NamedCapture['value'], undefined>}
                 : never
         }

@@ -14,13 +14,6 @@ type AsLinked<
     ? unknown
     : never
 ;
-//  Math
-type RangeInternal<T extends number, TArr extends number[]> = TArr['length'] extends T
-    ? TArr
-    : RangeInternal<T, [...TArr, TArr['length']]>
-;
-type Range<T extends number> = RangeInternal<T, []>;
-type Increment<T extends number> = [...Range<T>, unknown]['length'] & number;
 //  Rest
 type Infer<T, _Infer extends T> = T;
 type Prettify<T> = T extends (...args: never[]) => unknown
@@ -29,17 +22,6 @@ type Prettify<T> = T extends (...args: never[]) => unknown
         [K in keyof T]: T[K];
     } & {}
 ; // Thanks Matt!
-type ToTupleInternal<TRecord extends Record<number, unknown>, Index extends number> = keyof TRecord extends never
-    ? []
-    : [
-        ...(Index extends keyof TRecord
-            ? [TRecord[Index]]
-            : []
-        ),
-        ...ToTupleInternal<Omit<TRecord, Index>, Increment<Index>>
-    ]
-;
-type ToTuple<TRecord extends Record<number, unknown>> = ToTupleInternal<TRecord, 0>;
 
 type SatisfiedBy<TConstraint, T extends TConstraint> = T;
 type Is<T extends boolean, TIf, TElse> = T extends true
@@ -261,27 +243,44 @@ type ContextualizeToken<TToken extends Token> = TToken extends { type: 'alternat
         ? ContextualizeGroups<TToken['groups']>
         : never
 ;
+type FilterCaptures<T extends {value: unknown, reference: Group}[]> = unknown extends AsLinked<T, infer Head, infer Tail>
+    ? [
+        ...(Head['reference']['isCaptured'] extends false
+            ? []
+            : [Head]
+        ),
+        ...FilterCaptures<Tail>
+    ]
+    : []
+;
+type MapCaptures<T extends {value: unknown, reference: Group}[]> = unknown extends AsLinked<T, infer Head, infer Tail>
+    ? [Fallback<Head['value'], undefined>, ...MapCaptures<Tail>]
+    : []
+;
+type MapNamedCaptures<T extends {value: unknown, reference: Group}[]> = unknown extends AsLinked<T, infer Head, infer Tail>
+    ? [
+        ...(unknown extends As<Head['reference'], infer Capture>
+            ? Capture extends {
+                isCaptured: true,
+                isNamed: true
+            }
+                ? [{
+                    key: Capture['name'],
+                    value: Head['value']
+                }]
+                : []
+            : []
+        ),
+        ...MapNamedCaptures<Tail>
+    ]
+    : []
+;
 type Transform<T extends {value: unknown, reference: Group}[]> = T extends unknown
-    ? unknown extends As<
-        {[I in keyof T & `${number}` as T[I]['reference']['isCaptured'] extends false ? never : I]: T[I]},
-        infer Captures
-    >
+    ? FilterCaptures<T> extends infer Captures extends {value: unknown, reference: Group}[]
         ? {
-            captures: ToTuple<{[I in keyof Captures & `${number}` as Numeric<I>]: Fallback<Captures[I]['value'], undefined>}>,
-            namedCaptures: {
-                [I in keyof Captures & `${number}`]: unknown extends As<Captures[I]['reference'], infer Capture>
-                    ? Capture extends {
-                        isCaptured: true,
-                        isNamed: true
-                    }
-                        ? {
-                            key: Capture['name'],
-                            value: Captures[I]['value']
-                        }
-                        : never
-                    : never
-            } extends infer NamedCaptures extends Record<string, {key: string, value: unknown}>
-                ? {[I in keyof NamedCaptures as NamedCaptures[I]['key']]: Fallback<NamedCaptures[I]['value'], undefined>}
+            captures: MapCaptures<Captures>,
+            namedCaptures: MapNamedCaptures<Captures> extends infer NamedCaptures extends {key: string, value: unknown}[]
+                ? {[NamedCapture in NamedCaptures[number] as NamedCapture['key']]: Fallback<NamedCapture['value'], undefined>}
                 : never
         }
         : never

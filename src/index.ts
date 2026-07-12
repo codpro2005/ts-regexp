@@ -254,12 +254,10 @@ type FilterCaptures<T extends ContextualValues> = unknown extends AsLinked<T, in
     ]
     : []
 ;
-type Entry = {
+type ToRecord<T extends {
     key: keyof never,
     value: unknown
-};
-type SatisfiesEntry<T extends Entry> = T;
-type ToRecord<T extends Entry[]> = {
+}[]> = {
     [Entry in T[number] as Entry['key']]: Entry['value']
 };
 type CapturesFallback<T extends Record<keyof never, unknown> | unknown[]> = {
@@ -275,10 +273,10 @@ type Transform<T extends ContextualValues> = T extends unknown
                         isCaptured: true,
                         isNamed: true
                     }
-                        ? SatisfiesEntry<{
+                        ? {
                             key: Capture['name'],
                             value: Captures[I]['value']
-                        }>
+                        }
                         : never
                     : never
             }>>>

@@ -209,10 +209,9 @@ type Token = SatisfiedBy<{ type: string },
     )[]
 }>;
 type Groups = (Token & {type: 'groups'})['groups'];
-type Group = Groups[number];
 // Contextualization
 type ContextualValue = {
-    reference: Group,
+    reference: Groups[number],
     value: unknown
 };
 type SatisfiesContextualValue<T extends ContextualValue> = T;
@@ -259,10 +258,11 @@ type MapCaptures<T extends ContextualValues> = unknown extends AsLinked<T, infer
     ? [Fallback<Head['value'], undefined>, ...MapCaptures<Tail>]
     : []
 ;
-type SatisfiesBridge<T extends {
-    key: string,
+type Entry = {
+    key: keyof never,
     value: unknown
-}> = T;
+};
+type SatisfiesEntry<T extends Entry> = T;
 type MapNamedCaptures<T extends ContextualValues> = unknown extends AsLinked<T, infer Head, infer Tail>
     ? [
         ...(unknown extends As<Head['reference'], infer Capture>
@@ -270,7 +270,7 @@ type MapNamedCaptures<T extends ContextualValues> = unknown extends AsLinked<T, 
                 isCaptured: true,
                 isNamed: true
             }
-                ? [SatisfiesBridge<{
+                ? [SatisfiesEntry<{
                     key: Capture['name'],
                     value: Head['value']
                 }>]
@@ -285,8 +285,8 @@ type Transform<T extends ContextualValues> = T extends unknown
     ? FilterCaptures<T> extends infer Captures extends ContextualValues
         ? {
             captures: MapCaptures<Captures>,
-            namedCaptures: MapNamedCaptures<Captures> extends infer NamedCaptures extends SatisfiesBridge<{key: string, value: unknown}>[]
-                ? {[NamedCapture in NamedCaptures[number] as NamedCapture['key']]: Fallback<NamedCapture['value'], undefined>}
+            namedCaptures: MapNamedCaptures<Captures> extends infer NamedCaptureEntries extends Entry[]
+                ? {[NamedCaptureEntry in NamedCaptureEntries[number] as NamedCaptureEntry['key']]: Fallback<NamedCaptureEntry['value'], undefined>}
                 : never
         }
         : never

@@ -254,40 +254,34 @@ type FilterCaptures<T extends ContextualValues> = unknown extends AsLinked<T, in
     ]
     : []
 ;
-type MapCaptures<T extends ContextualValues> = unknown extends AsLinked<T, infer Head, infer Tail>
-    ? [Fallback<Head['value'], undefined>, ...MapCaptures<Tail>]
-    : []
-;
 type Entry = {
     key: keyof never,
     value: unknown
 };
 type SatisfiesEntry<T extends Entry> = T;
-type MapNamedCaptures<T extends ContextualValues> = unknown extends AsLinked<T, infer Head, infer Tail>
-    ? [
-        ...(unknown extends As<Head['reference'], infer Capture>
-            ? Capture extends {
-                isCaptured: true,
-                isNamed: true
-            }
-                ? [SatisfiesEntry<{
-                    key: Capture['name'],
-                    value: Head['value']
-                }>]
-                : []
-            : []
-        ),
-        ...MapNamedCaptures<Tail>
-    ]
-    : []
-;
+type ToRecord<T extends Entry[]> = {
+    [Entry in T[number] as Entry['key']]: Entry['value']
+};
+type CapturesFallback<T extends Record<keyof never, unknown> | unknown[]> = {
+    [K in keyof T]: Fallback<T[K], undefined>
+};
 type Transform<T extends ContextualValues> = T extends unknown
     ? FilterCaptures<T> extends infer Captures extends ContextualValues
         ? {
-            captures: MapCaptures<Captures>,
-            namedCaptures: MapNamedCaptures<Captures> extends infer NamedCaptureEntries extends Entry[]
-                ? {[NamedCaptureEntry in NamedCaptureEntries[number] as NamedCaptureEntry['key']]: Fallback<NamedCaptureEntry['value'], undefined>}
-                : never
+            captures: CapturesFallback<{[I in keyof Captures]: Captures[I]['value']}>,
+            namedCaptures: CapturesFallback<ToRecord<{
+                [I in keyof Captures]: unknown extends As<Captures[I]['reference'], infer Capture>
+                    ? Capture extends {
+                        isCaptured: true,
+                        isNamed: true
+                    }
+                        ? SatisfiesEntry<{
+                            key: Capture['name'],
+                            value: Captures[I]['value']
+                        }>
+                        : never
+                    : never
+            }>>
         }
         : never
     : never

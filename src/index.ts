@@ -20,7 +20,7 @@ type Prettify<T> = T extends (...args: never[]) => unknown
     ? (...args: Parameters<T>) => ReturnType<T>
     : {
         [K in keyof T]: T[K];
-    } & {}
+    } & unknown
 ; // Thanks Matt!
 
 type SatisfiedBy<TConstraint, T extends TConstraint> = T;
@@ -269,7 +269,7 @@ type Transform<T extends ContextualValues> = T extends unknown
     ? FilterCaptures<T> extends infer Captures extends ContextualValues
         ? {
             captures: CapturesFallback<{[I in keyof Captures]: Captures[I]['value']}>,
-            namedCaptures: CapturesFallback<ToRecord<{
+            namedCaptures: Prettify<CapturesFallback<ToRecord<{
                 [I in keyof Captures]: unknown extends As<Captures[I]['reference'], infer Capture>
                     ? Capture extends {
                         isCaptured: true,
@@ -281,7 +281,7 @@ type Transform<T extends ContextualValues> = T extends unknown
                         }>
                         : never
                     : never
-            }>>
+            }>>>
         }
         : never
     : never

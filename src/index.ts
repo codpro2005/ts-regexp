@@ -254,12 +254,6 @@ type FilterCaptures<T extends ContextualValues> = unknown extends AsLinked<T, in
     ]
     : []
 ;
-type ToRecord<T extends {
-    key: keyof never,
-    value: unknown
-}[]> = {
-    [Entry in T[number] as Entry['key']]: Entry['value']
-};
 type CapturesFallback<T extends Record<keyof never, unknown> | unknown[]> = {
     [K in keyof T]: Fallback<T[K], undefined>
 };
@@ -267,19 +261,17 @@ type Transform<T extends ContextualValues> = T extends unknown
     ? FilterCaptures<T> extends infer Captures extends ContextualValues
         ? {
             captures: CapturesFallback<{[I in keyof Captures]: Captures[I]['value']}>,
-            namedCaptures: Prettify<CapturesFallback<ToRecord<{
-                [I in keyof Captures]: unknown extends As<Captures[I]['reference'], infer Capture>
+            namedCaptures: Prettify<CapturesFallback<{
+                [I in IndexOf<Captures> as unknown extends As<Captures[I]['reference'], infer Capture>
                     ? Capture extends {
                         isCaptured: true,
                         isNamed: true
                     }
-                        ? {
-                            key: Capture['name'],
-                            value: Captures[I]['value']
-                        }
+                        ? Capture['name']
                         : never
                     : never
-            }>>>
+                ]: Captures[I]['value']
+            }>>
         }
         : never
     : never

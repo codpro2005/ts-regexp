@@ -254,14 +254,14 @@ type FilterCaptures<T extends ContextualValues> = unknown extends AsLinked<T, in
     ]
     : []
 ;
-type CapturesFallback<T extends Record<keyof never, unknown> | unknown[]> = {
+type MapFallbackUndefined<T extends object> = {
     [K in keyof T]: Fallback<T[K], undefined>
 };
 type Transform<T extends ContextualValues> = T extends unknown
     ? FilterCaptures<T> extends infer Captures extends ContextualValues
         ? {
-            captures: CapturesFallback<{[I in keyof Captures]: Captures[I]['value']}>,
-            namedCaptures: Prettify<CapturesFallback<{
+            captures: MapFallbackUndefined<{[I in keyof Captures]: Captures[I]['value']}>,
+            namedCaptures: Prettify<MapFallbackUndefined<{
                 [I in IndexOf<Captures> as unknown extends As<Captures[I]['reference'], infer Capture>
                     ? Capture extends {
                         isCaptured: true,

@@ -133,45 +133,48 @@ type IntervalQuantifierMin<T extends string> = T extends `${infer Min},${infer M
     : ToNattyNumber<T>
 ;
 //  Tree parser
-type GroupPatterns<T extends string> = T extends `?<${infer Name}>${infer Rest}`
+type ParseGroupBody<T extends string> = T extends `?<${infer Name}>${infer Pattern}`
     ? {
-        value: {
+        meta: {
             isCaptured: true,
             isNamed: true,
             name: Name
         },
-        rest: Rest
+        pattern: Pattern
     }
-    : T extends `?${':' | `${'<' | ''}${'=' | '!'}`}${infer Rest}`
+    : T extends `?${':' | `${'<' | ''}${'=' | '!'}`}${infer Pattern}`
         ? {
-            value: {
+            meta: {
                 isCaptured: false
             },
-            rest: Rest
+            pattern: Pattern
         }
         : {
-            value: {
+            meta: {
                 isCaptured: true,
                 isNamed: false
             },
-            rest: T
+            pattern: T
         }
 ;
 type GroupsTree<T extends string> = T extends `${string}${infer Rest}`
     ? unknown extends AsSkippedCharacterClass<T, infer Remainder>
         ? GroupsTree<Remainder>
-        : T extends `(${infer Content})${Infer<ResolveGroup<Rest>, infer Tail>}`
+        : T extends `(${infer GroupBody})${Infer<ResolveGroup<Rest>, infer Tail>}`
             ? [
-                GroupPatterns<Content>['value'] & {
-                    isOptional: Tail extends `${'?' | '*'}${string}`
-                        ? true
-                        : Tail extends `{${infer Bounds}}${string}`
-                            ? 0 extends IntervalQuantifierMin<Bounds>
-                                ? true
-                                : false
-                            : false,
-                    inner: TokenTree<GroupPatterns<Content>['rest']>
-                },
+                unknown extends As<ParseGroupBody<GroupBody>, infer GroupInfo>
+                    ? GroupInfo['meta'] & {
+                        isOptional: Tail extends `${'?' | '*'}${string}`
+                            ? true
+                            : Tail extends `{${infer Bounds}}${string}`
+                                ? 0 extends IntervalQuantifierMin<Bounds>
+                                    ? true
+                                    : false
+                                : false,
+                        inner: TokenTree<GroupInfo['pattern']>
+                    }
+                    : never
+                ,
                 ...GroupsTree<Tail>
             ]
             : GroupsTree<Rest>

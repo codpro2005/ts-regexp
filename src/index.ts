@@ -124,29 +124,30 @@ type ResolveAlternation<T extends string> = T extends `${infer First}${infer Res
             : ResolveAlternation<Rest>
     : never
 ;
-type InferMin<T extends string> = T extends `${infer Min},${infer Max}`
+type IntervalQuantifierMin<T extends string> = T extends `${infer Min},${infer Max}`
     ? Max extends ''
         ? ToNattyNumber<Min>
         : ToNattyNumber<Max> extends never
             ? never
             : ToNattyNumber<Min>
     : ToNattyNumber<T>
+;
 //  Tree parser
-type GroupPatterns<T extends string> = T extends `?<${infer Name}>${infer TheRest}`
+type GroupPatterns<T extends string> = T extends `?<${infer Name}>${infer Rest}`
     ? {
         value: {
             isCaptured: true,
             isNamed: true,
             name: Name
         },
-        rest: TheRest
+        rest: Rest
     }
-    : T extends `?${':' | `${'<' | ''}${'=' | '!'}`}${infer TheRest}`
+    : T extends `?${':' | `${'<' | ''}${'=' | '!'}`}${infer Rest}`
         ? {
             value: {
                 isCaptured: false
             },
-            rest: TheRest
+            rest: Rest
         }
         : {
             value: {
@@ -164,8 +165,8 @@ type GroupsTree<T extends string> = T extends `${string}${infer Rest}`
                 GroupPatterns<Content>['value'] & {
                     isOptional: Tail extends `${'?' | '*'}${string}`
                         ? true
-                        : Tail extends `{${infer ModRange}}${string}`
-                            ? 0 extends InferMin<ModRange>
+                        : Tail extends `{${infer Bounds}}${string}`
+                            ? 0 extends IntervalQuantifierMin<Bounds>
                                 ? true
                                 : false
                             : false,
@@ -257,25 +258,6 @@ type FilterCaptures<T extends ContextualValues> = unknown extends AsLinked<T, in
 type MapFallbackUndefined<T extends object> = {
     [K in keyof T]: Fallback<T[K], undefined>
 };
-type Transform<T extends ContextualValues> = T extends unknown
-    ? FilterCaptures<T> extends infer Captures extends ContextualValues
-        ? {
-            captures: MapFallbackUndefined<{[I in keyof Captures]: Captures[I]['value']}>,
-            namedCaptures: Prettify<MapFallbackUndefined<{
-                [I in IndexOf<Captures> as unknown extends As<Captures[I]['reference'], infer Capture>
-                    ? Capture extends {
-                        isCaptured: true,
-                        isNamed: true
-                    }
-                        ? Capture['name']
-                        : never
-                    : never
-                ]: Captures[I]['value']
-            }>>
-        }
-        : never
-    : never
-;
 
 /**
  * Parse the capture groups from a regex-like string literal type.
@@ -303,7 +285,7 @@ export type Parse<T extends string> = string extends T
         captures: [string, ...(string | undefined)[]],
         namedCaptures: Record<string, string | undefined>;
     }
-    : Transform<ContextualizeToken<{
+    : unknown extends As<ContextualizeToken<{
         type: 'groups',
         groups: [{
             isCaptured: true,
@@ -311,7 +293,26 @@ export type Parse<T extends string> = string extends T
             isOptional: false,
             inner: TokenTree<T>
         }]
-    }>>
+    }>, infer RawCaptures>
+        ? RawCaptures extends unknown
+            ? FilterCaptures<RawCaptures> extends infer Captures extends ContextualValues
+                ? {
+                    captures: MapFallbackUndefined<{[I in keyof Captures]: Captures[I]['value']}>,
+                    namedCaptures: Prettify<MapFallbackUndefined<{
+                        [I in IndexOf<Captures> as unknown extends As<Captures[I]['reference'], infer Capture>
+                            ? Capture extends {
+                                isCaptured: true,
+                                isNamed: true
+                            }
+                                ? Capture['name']
+                                : never
+                            : never
+                        ]: Captures[I]['value']
+                    }>>
+                }
+                : never
+            : never
+        : never
 ;
 
 /**

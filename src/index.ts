@@ -124,14 +124,6 @@ type ResolveAlternation<T extends string> = T extends `${infer First}${infer Res
             : ResolveAlternation<Rest>
     : never
 ;
-type IntervalQuantifierMin<T extends string> = T extends `${infer Min},${infer Max}`
-    ? Max extends ''
-        ? ToNattyNumber<Min>
-        : ToNattyNumber<Max> extends never
-            ? never
-            : ToNattyNumber<Min>
-    : ToNattyNumber<T>
-;
 //  Tree parser
 type ParseGroupBody<T extends string> = T extends `?<${infer Name}>${infer Pattern}`
     ? {
@@ -157,6 +149,14 @@ type ParseGroupBody<T extends string> = T extends `?<${infer Name}>${infer Patte
             pattern: T
         }
 ;
+type ParseIntervalQuantifierMin<T extends string> = T extends `${infer Min},${infer Max}`
+    ? Max extends ''
+        ? ToNattyNumber<Min>
+        : ToNattyNumber<Max> extends never
+            ? never
+            : ToNattyNumber<Min>
+    : ToNattyNumber<T>
+;
 type GroupsTree<T extends string> = T extends `${string}${infer Rest}`
     ? unknown extends AsSkippedCharacterClass<T, infer Remainder>
         ? GroupsTree<Remainder>
@@ -167,7 +167,7 @@ type GroupsTree<T extends string> = T extends `${string}${infer Rest}`
                         isOptional: Tail extends `${'?' | '*'}${string}`
                             ? true
                             : Tail extends `{${infer Bounds}}${string}`
-                                ? 0 extends IntervalQuantifierMin<Bounds>
+                                ? 0 extends ParseIntervalQuantifierMin<Bounds>
                                     ? true
                                     : false
                                 : false,

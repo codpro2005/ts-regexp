@@ -58,7 +58,11 @@ type Override<TOriginal, TNew> = Omit<
         Extract<keyof TOriginal, keyof TNew>
     >
 ;
-type Fallback<T, TFall> = [T] extends [never]
+type Dress<T> = never extends T
+  ? T
+  : never
+; // Defers `T`. Practically equivalent to `NoInfer<T>`.
+type Fallback<T, TFall> = Dress<T> extends never
     ? TFall
     : T
 ;
@@ -421,7 +425,7 @@ export const regex = <
     flags?: ValidatedFlags<TFlags>
 ) => {
     const regExp = new RegExp(pattern, flags);
-    const resolvedFlags = (flags ?? '') as [TFlags] extends [never]
+    const resolvedFlags = (flags ?? '') as Dress<TFlags> extends never
         ? ''
         : TFlags
     ;

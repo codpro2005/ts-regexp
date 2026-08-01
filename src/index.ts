@@ -430,7 +430,6 @@ export const regex = <
         : TFlags
     ;
     type ResolvedFlags = typeof resolvedFlags;
-    const isGlobal = strIncludes(resolvedFlags, 'g');
     type Parsed = Parse<TPattern>;
     type Captures = Parsed['captures'];
     type NamedCaptures = Parsed['namedCaptures'];
@@ -506,11 +505,12 @@ export const regex = <
         },
         {}
     );
-    type GlobalMatches = [Head<Captures>, ...Head<Captures>[]];
     type RegExpSatisfies<T extends keyof T extends keyof typeof regExp
         ? unknown
         : never
     > = T;
+    type GlobalMatches = [Head<Captures>, ...Head<Captures>[]];
+    const isGlobal = strIncludes(resolvedFlags, 'g');
     const ret = {
         regExp,
         ...toPOJO(regExp as Override<typeof regExp, RegExpSatisfies<{

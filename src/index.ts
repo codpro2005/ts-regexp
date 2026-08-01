@@ -482,19 +482,19 @@ export const regex = <
         string: T,
         ...TrailingReplaceArgs<T>[TOverloadIndex]
     ];
-    const replaceIn: {
-        <T extends string>(...args: ReplaceArgs<T, 0>): string;
-        <T extends string>(...args: ReplaceArgs<T, 1>): string;
-    } = <T extends string>(...args: ReplaceArgs<T, IndexOf<TrailingReplaceArgs<T>>>) => {
+    const replaceIn = (<T extends string>(...args: ReplaceArgs<T, IndexOf<TrailingReplaceArgs<T>>>) => {
         const [source, ...rest] = args;
         return source.replace(regExp, ...(rest as Tail<Parameters<typeof source.replace>>))
-    };
-    const replaceAllIn: {
+    }) as {
         <T extends string>(...args: ReplaceArgs<T, 0>): string;
         <T extends string>(...args: ReplaceArgs<T, 1>): string;
-    } = <T extends string>(...args: ReplaceArgs<T, IndexOf<TrailingReplaceArgs<T>>>) => {
+    };
+    const replaceAllIn = (<T extends string>(...args: ReplaceArgs<T, IndexOf<TrailingReplaceArgs<T>>>) => {
         const [source, ...rest] = args;
         return source.replaceAll(regExp, ...(rest as Tail<Parameters<typeof source.replaceAll>>))
+    }) as {
+        <T extends string>(...args: ReplaceArgs<T, 0>): string;
+        <T extends string>(...args: ReplaceArgs<T, 1>): string;
     };
     const ternaryGlobalMethods = <TBoolean extends boolean>(condition: TBoolean) => ternary(condition)(
         {

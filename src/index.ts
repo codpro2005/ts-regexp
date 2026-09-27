@@ -251,6 +251,7 @@ type ContextualizeToken<TToken extends Token> = TToken extends { type: 'alternat
         ? ContextualizeGroups<TToken['groups']>
         : never
 ;
+
 type ContextualValues = ContextualValue[];
 type FilterCaptures<T extends ContextualValues> = unknown extends AsLinked<T, infer Head, infer Tail>
     ? [
@@ -272,7 +273,7 @@ type MapFallbackUndefined<T extends object> = {
  * @example
  * ```ts
  * type Result = Parse<'(?<a>0)|(?<b>1)'>;
- * // type Result = {
+ * //   ^? type Result = {
  * //     captures: [string, string, undefined];
  * //     namedCaptures: {
  * //         a: string;

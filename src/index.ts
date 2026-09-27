@@ -570,7 +570,3 @@ export const regex = <
         )
     ) & (IndicesBehavior<false> | IndicesBehavior<true>)>;
 };
-/**
- * @deprecated renamed to `regex`. Will be removed on next release.
- */
-export const typedRegExp = regex;

@@ -8,6 +8,7 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "strict": true,
+    "exactOptionalPropertyTypes": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "module": "esnext",
